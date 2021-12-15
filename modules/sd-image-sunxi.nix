@@ -2,12 +2,7 @@
   imports = [
     <nixpkgs/nixos/modules/profiles/base.nix>
     ./sd-image.nix
-  ];
-
-  nixpkgs.overlays = [
-    (import ../overlays/tf-a)
-    (import ../overlays/uboot)
-    (import ../overlays/linux)
+    ./overlays.nix
   ];
 
   boot = {

@@ -1,0 +1,38 @@
+From a9460d4de7bd4138570f34aa55e1cf0c2c5ddb97 Mon Sep 17 00:00:00 2001
+From: Jernej Skrabec <jernej.skrabec@gmail.com>
+Date: Fri, 15 Oct 2021 21:07:46 +0200
+Subject: [PATCH 17/51] arm64: dts: allwinner: h616: Add GPU node
+
+Signed-off-by: Jernej Skrabec <jernej.skrabec@gmail.com>
+---
+ arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi b/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
+index 3e15e8b765..9dcc19e50d 100644
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
+@@ -165,6 +165,20 @@ mixer0_out_tcon_top_mixer0: endpoint {
+ 			};
+ 		};
+ 
++		gpu: gpu@1800000 {
++			compatible = "allwinner,sun50i-h616-mali",
++				     "arm,mali-bifrost";
++			reg = <0x1800000 0x40000>;
++			interrupts = <GIC_SPI 95 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 96 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 97 IRQ_TYPE_LEVEL_HIGH>;
++			interrupt-names = "job", "mmu", "gpu";
++			clocks = <&ccu CLK_GPU0>, <&ccu CLK_BUS_GPU>;
++			clock-names = "core", "bus";
++			resets = <&ccu RST_BUS_GPU>;
++			status = "disabled";
++		};
++
+ 		syscon: syscon@3000000 {
+ 			compatible = "allwinner,sun50i-h616-system-control";
+ 			reg = <0x03000000 0x1000>;
+-- 
+2.33.1
+

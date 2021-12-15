@@ -1,0 +1,77 @@
+From fa1684df29c9aa1bc58d055f4977b096e5db9f09 Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Tue, 14 Dec 2021 13:01:56 +0500
+Subject: [PATCH 49/51] uwe5622: Fixed paths in makefiles
+
+---
+ drivers/net/wireless/uwe5622/Makefile            |  2 +-
+ drivers/net/wireless/uwe5622/unisocwcn/Makefile  | 12 ++++++------
+ drivers/net/wireless/uwe5622/unisocwifi/Makefile |  2 +-
+ 3 files changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/net/wireless/uwe5622/Makefile b/drivers/net/wireless/uwe5622/Makefile
+index 08d2abba3e..379f9a1444 100644
+--- a/drivers/net/wireless/uwe5622/Makefile
++++ b/drivers/net/wireless/uwe5622/Makefile
+@@ -2,7 +2,7 @@ obj-$(CONFIG_AW_WIFI_DEVICE_UWE5622) += unisocwcn/
+ obj-$(CONFIG_WLAN_UWE5622)    += unisocwifi/
+ obj-$(CONFIG_TTY_OVERY_SDIO)  += tty-sdio/
+ 
+-UNISOCWCN_DIR := $(shell cd $(src)/unisocwcn/ && /bin/pwd)
++UNISOCWCN_DIR := $(shell cd $(srctree)/$(src)/unisocwcn && pwd)
+ UNISOC_BSP_INCLUDE := $(UNISOCWCN_DIR)/include
+ export UNISOC_BSP_INCLUDE
+ 
+diff --git a/drivers/net/wireless/uwe5622/unisocwcn/Makefile b/drivers/net/wireless/uwe5622/unisocwcn/Makefile
+index c916421583..63ce31a782 100644
+--- a/drivers/net/wireless/uwe5622/unisocwcn/Makefile
++++ b/drivers/net/wireless/uwe5622/unisocwcn/Makefile
+@@ -118,10 +118,10 @@ ccflags-y += -DCONFIG_WCN_BOOT
+ ccflags-y += -DCONFIG_WCN_UTILS
+ 
+ #### include path ######
+-ccflags-y += -I$(src)/../tty-sdio
+-ccflags-y += -I$(src)/include/
+-ccflags-y += -I$(src)/platform/
+-ccflags-y += -I$(src)/platform/rf/
++ccflags-y += -I $(srctree)/$(src)/../tty-sdio
++ccflags-y += -I $(srctree)/$(src)/include/
++ccflags-y += -I $(srctree)/$(src)/platform/
++ccflags-y += -I $(srctree)/$(src)/platform/rf/
+ 
+ #### add cflag for Customer ######
+ ### ---------- Hisilicon start ---------- ###
+@@ -384,7 +384,7 @@ $(MODULE_NAME)-$(CONFIG_WCN_SDIO) += \
+ 
+ # wcn module bind verify
+ ifeq ($(CONFIG_AW_BIND_VERIFY),y)
+-$(obj)/platform/wcn_bind_helper.o: $(src)/platform/wcn_bind_helper.c
++$(obj)/platform/wcn_bind_helper.o: $(srctree)/$(src)/platform/wcn_bind_helper.c
+ 	@$(HOSTCC) $^ -o $@
+ $(obj)/platform/wcn_bind_verify.o: $(obj)/platform/wcn_bind_helper.o
+ 	@echo " " > $(shell dirname $@)/.$(shell basename $@).cmd
+@@ -396,7 +396,7 @@ KDIR ?= $(ANDROID_PRODUCT_OUT)/obj/KERNEL_OBJ
+ ARCH ?= arm
+ CROSS_COMPILE ?= arm-histbv310-linux-
+ 
+-EXTRA_CFLAGS += -I$(src)/include -D__linux__
++EXTRA_CFLAGS += -I $(srctree)/$(src)/include -D__linux__
+ 
+ all: $(all_dependencies)
+ 
+diff --git a/drivers/net/wireless/uwe5622/unisocwifi/Makefile b/drivers/net/wireless/uwe5622/unisocwifi/Makefile
+index 966e74eeeb..b201fa1bf1 100644
+--- a/drivers/net/wireless/uwe5622/unisocwifi/Makefile
++++ b/drivers/net/wireless/uwe5622/unisocwifi/Makefile
+@@ -1,7 +1,7 @@
+ PWD := $(shell pwd)
+ all_dependencies := driver
+ 
+-ccflags-y += -I$(src)/../unisocwcn/include
++ccflags-y += -I $(srctree)/$(src)/../unisocwcn/include
+ ccflags-$(ORIGIN_BSP) += -I$(srctree)/../hardware/wifi/unisoc/drivers/unisocwcn/include
+ 
+ ifneq ($(UNISOC_BSP_INCLUDE),)
+-- 
+2.33.1
+

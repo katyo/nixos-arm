@@ -1,0 +1,27 @@
+From 23abe3c73a7c7d18e123173c056e249a94209486 Mon Sep 17 00:00:00 2001
+From: orangepi-xunlong <258384131@qq.com>
+Date: Mon, 6 Dec 2021 13:57:49 +0800
+Subject: [PATCH 48/51] OrangePi Zero2: dts: Set dcdcd to 1.4v
+
+---
+ arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts b/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts
+index ccb5c72189..51ea7a1f3a 100644
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts
+@@ -256,8 +256,8 @@ reg_dcdcc: dcdcc {
+ 
+ 			reg_dcdcd: dcdcd {
+ 				regulator-always-on;
+-				regulator-min-microvolt = <1500000>;
+-				regulator-max-microvolt = <1500000>;
++				regulator-min-microvolt = <1400000>;
++				regulator-max-microvolt = <1400000>;
+ 				regulator-name = "vdd-dram";
+ 			};
+ 
+-- 
+2.33.1
+

@@ -1,8 +1,7 @@
 { pkgs, lib, config, ... }: {
   imports = [
-    ./sd-image-sunxi.nix
+    ../../arch/sunxi
   ];
-
   boot = {
     blacklistedKernelModules = [
       "panfrost"

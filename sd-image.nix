@@ -1,6 +1,6 @@
 { pkgs, lib, config, ... }: {
   imports = [
-    ./modules/sd-image-orangepi-zero2.nix
+    ./modules/board/orangepi-zero2/sd-image.nix
   ];
 
   sdImage = {

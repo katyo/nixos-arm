@@ -1,6 +1,7 @@
 { pkgs, lib, config, ... }: {
   imports = [
     ../../overlays.nix
+    ./cache.nix
   ];
   boot = {
     loader = {

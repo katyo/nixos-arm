@@ -4,7 +4,7 @@
   ];
   boot = {
     blacklistedKernelModules = [
-      "panfrost"
+      #"panfrost"
     ];
     kernelPackages = pkgs.linuxPackages_h616;
   };

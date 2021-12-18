@@ -7,7 +7,8 @@ in {
     BL31 = "${pkgs.armTrustedFirmwareAllwinnerH616}/bl31.bin";
     filesToInstall = [ "u-boot-sunxi-with-spl.bin" ];
     extraPatches = [
-      ./patches/add-h616-THS-workaround.patch
+      ./patches/0001-Adding-h616-THS-workaround.patch
+      ./patches/0002-sunxi-H616-GPU-enable-hack.patch
     ];
   };
 }

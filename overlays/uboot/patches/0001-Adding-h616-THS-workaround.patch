@@ -1,9 +1,8 @@
-From 07bdfe1e2ebc51a434dbe66733378a979530abb0 Mon Sep 17 00:00:00 2001
-From: Kali Prasad <kprasadvnsi@protonmail.com>
-Date: Sat, 18 Sep 2021 22:57:05 +0530
-Subject: [PATCH] Adding h616 THS workaround.
+From 58d8c35b992392f685e4fd27ce447ef84cb4a8fe Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Mon, 6 Dec 2021 10:49:41 +0500
+Subject: [PATCH 1/2] Adding h616 THS workaround.
 
-Signed-off-by: Kali Prasad <kprasadvnsi@protonmail.com>
 ---
  board/sunxi/board.c | 9 +++++++++
  1 file changed, 9 insertions(+)
@@ -29,5 +28,5 @@ index 1a46100e40..9f0c6d99ba 100644
  	/*
  	 * Temporary workaround for enabling I2C clocks until proper sunxi DM
 -- 
-2.25.1
+2.33.1
 

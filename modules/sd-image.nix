@@ -67,6 +67,30 @@ in
       '';
     };
 
+    ubootPackage = mkOption {
+      type = types.nullOr types.package;
+      description = ''
+        U-Boot package to use bootloader binary from.
+      '';
+    };
+
+    ubootBinary = mkOption {
+      type = types.str;
+      default = "u-boot-*.bin";
+      example = "u-boot-sunxi-with-spl.bin";
+      description = ''
+        U-Boot binary image name or pattern.
+      '';
+    };
+
+    ubootOffset = mkOption {
+      type = types.ints.unsigned;
+      default = 8;
+      description = ''
+        U-Boot binary offset in kibibytes (1024 bytes).
+      '';
+    };
+
     partitionsOffset = mkOption {
       type = types.ints.unsigned;
       default = 8;
@@ -278,6 +302,11 @@ in
         # Verify the FAT partition before copying it.
         fsck.vfat -vn firmware_part.img
         dd conv=notrunc if=firmware_part.img of=$img seek=$START count=$SECTORS
+        ''}
+
+        ${lib.optionalString (config.sdImage.ubootPackage != null) ''
+        # Install U-Boot binary image
+        dd if=${config.sdImage.ubootPackage}/${config.sdImage.ubootBinary} of=$img bs=1024 seek=${toString config.sdImage.ubootOffset} conv=notrunc
         ''}
 
         ${config.sdImage.postBuildCommands}

@@ -8,4 +8,9 @@
     ];
     kernelPackages = pkgs.linuxPackages_h616;
   };
+  hardware = {
+    firmware = with pkgs; [
+      wcnmodem-firmware
+    ];
+  };
 }

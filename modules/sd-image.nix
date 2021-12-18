@@ -68,7 +68,7 @@ in
     };
 
     partitionsOffset = mkOption {
-      type = types.int;
+      type = types.ints.unsigned;
       default = 8;
       description = ''
         Gap in front of the partitions, in mebibytes (1024×1024 bytes).
@@ -118,7 +118,7 @@ in
     };
 
     firmwarePartitionSize = mkOption {
-      type = types.int;
+      type = types.ints.unsigned;
       # As of 2019-08-18 the Raspberry pi firmware + u-boot takes ~18MiB
       default = 30;
       description = ''
@@ -224,20 +224,26 @@ in
         echo "Decompressing rootfs image"
         zstd -d --no-progress "${rootfsImage}" -o ./root-fs.img
 
-        # Gap in front of the first partition, in MiB
-        gap=${toString config.sdImage.partitionsOffset}
+        blockSize=512
+        partitionsOffset=${toString config.sdImage.partitionsOffset}
 
         ${if hasFirmwarePartition then ''
-        firmwarePartitionNo=1
-        rootPartitionNo=2
+        firmwarePartitionNumber=1
+        firmwarePartitionOffset=$partitionsOffset
+        firmwarePartitionSizeBlocks=$((${toString config.sdImage.firmwarePartitionSize} * 1024 * 1024 / blockSize))
+        firmwarePartitionSize=$((firmwarePartitionSizeBlocks * blockSize))
+        rootPartitionNumber=2
+        rootPartitionOffset=$((firmwarePartitionOffset + firmwarePartitionSize))
         '' else ''
-        rootPartitionNo=1
+        rootPartitionNumber=1
+        rootPartitionOffset=$partitionsOffset
         ''}
 
         # Create the image file sized to fit /boot/firmware and /, plus slack for the gap.
-        rootSizeBlocks=$(du -B 512 --apparent-size ./root-fs.img | awk '{ print $1 }')
-        firmwareSizeBlocks=$((${toString config.sdImage.firmwarePartitionSize} * 1024 * 1024 / 512))
-        imageSize=$((rootSizeBlocks * 512 + firmwareSizeBlocks * 512 + gap * 1024 * 1024))
+        rootPartitionSizeBlocks=$(du -B $blockSize --apparent-size ./root-fs.img | awk '{ print $1 }')
+        rootPartitionSize=$((rootPartitionSizeBlocks * blockSize))
+
+        imageSize=$((rootPartitionOffset + rootPartitionSize))
         truncate -s $imageSize $img
 
         # type=b is 'W95 FAT32', type=83 is 'Linux'.
@@ -248,19 +254,19 @@ in
             label-id: ${config.sdImage.firmwarePartitionID}
 
             ${lib.optionalString hasFirmwarePartition ''
-            start=$((gap))M, size=$firmwareSizeBlocks, type=b
+            start=$firmwarePartitionOffset, size=$firmwarePartitionSizeBlocks, type=b
             ''}
-            start=$((gap + ${toString config.sdImage.firmwarePartitionSize}))M, type=83, bootable
+            start=$rootPartitionOffset, type=83, bootable
         EOF
 
         # Copy the rootfs into the SD image
-        eval $(partx $img -o START,SECTORS --nr $rootPartitionNo --pairs)
+        eval $(partx $img -o START,SECTORS --nr $rootPartitionNumber --pairs)
         dd conv=notrunc if=./root-fs.img of=$img seek=$START count=$SECTORS
 
         ${lib.optionalString hasFirmwarePartition ''
         # Create a FAT32 /boot/firmware partition of suitable size into firmware_part.img
-        eval $(partx $img -o START,SECTORS --nr $firmwarePartitionNo --pairs)
-        truncate -s $((SECTORS * 512)) firmware_part.img
+        eval $(partx $img -o START,SECTORS --nr $firmwarePartitionNumber --pairs)
+        truncate -s $((SECTORS * blockSize)) firmware_part.img
         faketime "1970-01-01 00:00:00" mkfs.vfat -i ${config.sdImage.firmwarePartitionID} -n ${config.sdImage.firmwarePartitionName} firmware_part.img
 
         # Populate the files intended for /boot/firmware

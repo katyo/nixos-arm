@@ -5,7 +5,7 @@
   ];
 
   sdImage = {
-    imageBaseName = "nixos-sd-image-sunxi64";
+    imageBaseName = "nixos-sd-image-sunxi64-";
     partitionsOffset = 4;
     firmwarePartition = false;
     populateRootCommands = ''

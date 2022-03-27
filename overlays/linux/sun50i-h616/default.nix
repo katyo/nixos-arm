@@ -1,5 +1,5 @@
 { pkgs, lib }:
-let linux = pkgs.linux_5_15.override {
+let linux = pkgs.linux_5_17.override {
       structuredExtraConfig = with lib.kernel; {
         ARCH_SUNXI = yes;
         HIBERNATION = no;
@@ -27,6 +27,7 @@ let linux = pkgs.linux_5_15.override {
         ARM64_EPAN = yes;
         ARM64_LD_HAS_FIX_ERRATUM_843419 = yes;
         ARM_ALLWINNER_SUN50I_CPUFREQ_NVMEM = module;
+        ARM_MHU = yes;
         ARM_MHU_V2 = module;
         ARM_PSCI_CPUIDLE_DOMAIN = yes;
         ARM_SMMU_LEGACY_DT_BINDINGS = no;
@@ -82,10 +83,10 @@ let linux = pkgs.linux_5_15.override {
         CRYPTO_DEV_VIRTIO = module;
 
         DRM_SUN4I = module;
-        DRM_SUN4I_BACKEND = module;
-        DRM_SUN4I_HMDI = module;
-        #DRM_SUN4I_HMDI_AUDIO = module;
-        #DRM_SUN4I_HMDI_CEC = module;
+        #DRM_SUN4I_BACKEND = module;
+        #DRM_SUN4I_HMDI = module;
+        ##DRM_SUN4I_HMDI_AUDIO = module;
+        DRM_SUN4I_HMDI_CEC = yes;
         DRM_SUN6I_DSI = module;
         DRM_SUN8I_DW_HDMI = module;
         DRM_SUN8I_MIXER = module;
@@ -160,6 +161,7 @@ let linux = pkgs.linux_5_15.override {
         DMA_SUN6I = module;
 
         # Ethernet
+        SUNXI_ADDR_MGMT = module;
         NET_VENDOR_ALLWINNER = yes;
         NET_VENDOR_MICROSOFT = yes;
         DWMAC_SUN8I = module;
@@ -175,11 +177,9 @@ let linux = pkgs.linux_5_15.override {
 
         RFKILL = module;
         RFKILL_GPIO = module;
-        RFKILL_INPUT = module;
+        RFKILL_INPUT = yes;
 
-        #RK_WIFI_DEVICE_UWE5621 = no;
-        #RK_WIFI_DEVICE_UWE5622 = no;
-
+        # Bluetooth
         BT = module;
         BT_RFCOMM = module;
         BT_RFCOMM_TTY = yes;
@@ -226,9 +226,6 @@ let linux = pkgs.linux_5_15.override {
         # unordered
         SUN4I_EMAC = module;
         SUN4I_GPADC = module;
-        SUN50I_A100_CCU = yes;
-        SUN50I_A100_R_CCU = yes;
-        SUN50I_A64_CCU = yes;
         SUN50I_DE2_BUS = yes;
         SUN50I_ERRATUM_UNKNOWN1 = yes;
         SUN50I_H616_CCU = yes;
@@ -251,57 +248,22 @@ let linux = pkgs.linux_5_15.override {
         {
           name = "h616-patches";
           patch = [
-            ./patches/0001-arm64-dts-allwinner-Add-Allwinner-H616-.dtsi-file.patch
-            ./patches/0002-dt-bindings-arm-sunxi-Add-two-H616-board-compatible-.patch
-            ./patches/0003-arm64-dts-allwinner-h616-Add-OrangePi-Zero-2-board-s.patch
-            ./patches/0004-arm64-dts-allwinner-h616-Add-X96-Mate-TV-box-support.patch
-            ./patches/0005-arm64-dts-allwinner-h616-Add-USB-nodes.patch
-            ./patches/0006-arm64-dts-allwinner-h616-OrangePi-Zero-2-Add-USB-nod.patch
-            ./patches/0007-arm64-dts-allwinner-h616-X96-Mate-Add-USB-nodes.patch
-            ./patches/0008-rtc-sun6i-Add-Allwinner-H616-support.patch
-            ./patches/0009-arm64-dts-allwinner-h616-Add-RTC-and-its-32K-clock.patch
-            ./patches/0010-nvmem-sunxi_sid-Support-SID-on-H616.patch
-            ./patches/0011-arm64-dts-allwinner-h616-Add-device-node-for-SID.patch
-            ./patches/0012-thermal-drivers-sun8i-Add-thermal-driver-for-H616.patch
-            ./patches/0013-arm64-dts-allwinner-h616-Add-thermal-sensor-and-ther.patch
-            ./patches/0014-dt-bindings-net-sun8i-emac-Add-H616-compatible-strin.patch
-            ./patches/0015-net-stmmac-dwmac-sun8i-Prepare-for-second-EMAC-clock.patch
-            ./patches/0016-wip-h616-hdmi.patch
-            ./patches/0017-arm64-dts-allwinner-h616-Add-GPU-node.patch
-            ./patches/0018-arm64-dts-allwinner-h616-orangepi-zero2-Enable-GPU.patch
-            ./patches/0019-media-cedrus-add-H616-variant.patch
-            ./patches/0020-soc-sunxi-sram-Add-SRAM-C1-H616-handling.patch
-            ./patches/0021-arm64-dts-allwinner-h616-Add-VPU-node.patch
-            ./patches/0022-media-hevc-Add-scaling-matrix-control.patch
-            ./patches/0023-media-cedrus-hevc-Add-support-for-scaling-lists.patch
-            ./patches/0024-media-cedrus-Don-t-kernel-map-most-buffers.patch
-            ./patches/0025-media-cedrus-hevc-tiles-hack.patch
-            ./patches/0026-media-cedrus-Add-callback-for-buffer-cleanup.patch
-            ./patches/0027-media-cedrus-hevc-Improve-buffer-management.patch
-            ./patches/0028-media-cedrus-h264-Improve-buffer-management.patch
-            ./patches/0029-media-cedrus-add-check-for-H264-and-HEVC-limitations.patch
-            ./patches/0030-WIP-media-uapi-hevc-add-fields-needed-for-rkvdec.patch
-            ./patches/0031-HACK-media-uapi-hevc-tiles-and-num_slices.patch
-            ./patches/0032-WIp-10-bit-HEVC-support.patch
-            ./patches/0033-bus-sun50i-de2-Adjust-printing-error-message.patch
-            ./patches/0034-T95-eth-sd-card-hack.patch
-            ./patches/0035-x96-hdmi.patch
-            ./patches/0036-bus-sunxi-rsb-Fix-shutdown.patch
-            ./patches/0037-phy-sun4i-usb-Rework-HCI-PHY-aka.-pmu_unk1-handling.patch
-            ./patches/0038-phy-sun4i-usb-Allow-reset-line-to-be-shared.patch
-            ./patches/0039-phy-sun4i-usb-Introduce-port2-SIDDQ-quirk.patch
-            ./patches/0040-phy-sun4i-usb-Add-support-for-the-H616-USB-PHY.patch
-            ./patches/0041-rtc-sun6i-Fix-time-overflow-handling.patch
-            ./patches/0042-rtc-sun6i-Add-support-for-linear-day-storage.patch
-            ./patches/0043-rtc-sun6i-Add-support-for-broken-down-alarm-register.patch
-            ./patches/0044-rtc-sun6i-Add-support-for-RTCs-without-external-LOSC.patch
-            ./patches/0045-sun8i-de33-Fixed-of_sunxi_ccu_probe.patch
-            ./patches/0046-Support-h616-ahub-and-hdmi-audio.patch
-            ./patches/0047-Added-unisoc-uwe5622-wifi-bt-driver.patch
-            ./patches/0048-OrangePi-Zero2-dts-Set-dcdcd-to-1.4v.patch
-            ./patches/0049-uwe5622-Fixed-paths-in-makefiles.patch
-            ./patches/0050-uwe5622-Using-ktime_t-for-timings.patch
-            ./patches/0051-sun50i-ahub-Resolved-circular-dependencies-between-m.patch
+            ./patches/arch.patch
+            ./patches/dts.patch
+            ./patches/clk.patch
+            ./patches/gpu.patch
+            ./patches/i2c.patch
+            ./patches/mfd.patch
+            ./patches/mac.patch
+            ./patches/eth.patch
+            ./patches/wifi.patch
+            ./patches/sid.patch
+            ./patches/usb.patch
+            ./patches/rtc.patch
+            ./patches/sram.patch
+            ./patches/media.patch
+            ./patches/hwmon.patch
+            ./patches/sound.patch
           ];
         }
       ];

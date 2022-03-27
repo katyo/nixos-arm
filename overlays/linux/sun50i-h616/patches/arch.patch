@@ -1,0 +1,39 @@
+diff --git a/Documentation/devicetree/bindings/arm/sunxi.yaml b/Documentation/devicetree/bindings/arm/sunxi.yaml
+index c8a3102c0fde..185ced5da6b8 100644
+--- a/Documentation/devicetree/bindings/arm/sunxi.yaml
++++ b/Documentation/devicetree/bindings/arm/sunxi.yaml
+@@ -853,6 +853,11 @@ properties:
+           - const: yones-toptech,bs1078-v2
+           - const: allwinner,sun6i-a31s
+ 
++      - description: X96 Mate TV box
++        items:
++          - const: hechuang,x96-mate
++          - const: allwinner,sun50i-h616
++
+       - description: Xunlong OrangePi
+         items:
+           - const: xunlong,orangepi
+@@ -953,4 +958,9 @@ properties:
+           - const: xunlong,orangepi-zero-plus2-h3
+           - const: allwinner,sun8i-h3
+ 
++      - description: Xunlong OrangePi Zero 2
++        items:
++          - const: xunlong,orangepi-zero2
++          - const: allwinner,sun50i-h616
++
+ additionalProperties: true
+diff --git a/arch/arm/kernel/topology.c b/arch/arm/kernel/topology.c
+index ef0058de432b..b87be5d007bf 100644
+--- a/arch/arm/kernel/topology.c
++++ b/arch/arm/kernel/topology.c
+@@ -121,7 +121,7 @@ static void __init parse_dt_topology(void)
+ 
+ 		rate = of_get_property(cn, "clock-frequency", &len);
+ 		if (!rate || len != 4) {
+-			pr_err("%pOF missing clock-frequency property\n", cn);
++			//pr_err("%pOF missing clock-frequency property\n", cn);
+ 			continue;
+ 		}
+ 

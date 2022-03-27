@@ -7,6 +7,7 @@
   sdImage = {
     imageBaseName = "nixos-sd-image-sunxi64-";
     partitionsOffset = 4;
+    ubootBinary = "u-boot-sunxi-with-spl.bin";
     firmwarePartition = false;
     populateRootCommands = ''
       mkdir -p ./files/boot

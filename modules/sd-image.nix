@@ -69,6 +69,7 @@ in
 
     ubootPackage = mkOption {
       type = types.nullOr types.package;
+      default = null;
       description = ''
         U-Boot package to use bootloader binary from.
       '';
@@ -132,21 +133,21 @@ in
       '';
     };
 
+    firmwarePartitionSize = mkOption {
+      type = types.ints.unsigned;
+      # As of 2019-08-18 the Raspberry pi firmware + u-boot takes ~18MiB
+      default = 30;
+      description = ''
+        Size of the /boot/firmware partition, in mebibytes (1024×1024 bytes).
+      '';
+    };
+
     rootPartitionUUID = mkOption {
       type = types.nullOr types.str;
       default = null;
       example = "14e19a7b-0ae0-484d-9d54-43bd6fdc20c7";
       description = ''
         UUID for the filesystem on the main NixOS partition on the SD card.
-      '';
-    };
-
-    firmwarePartitionSize = mkOption {
-      type = types.ints.unsigned;
-      # As of 2019-08-18 the Raspberry pi firmware + u-boot takes ~18MiB
-      default = 30;
-      description = ''
-        Size of the /boot/firmware partition, in megabytes.
       '';
     };
 
@@ -238,6 +239,8 @@ in
 
       nativeBuildInputs = [ dosfstools e2fsprogs mtools libfaketime util-linux zstd xz ];
 
+      buildInputs = lib.optional (config.sdImage.ubootPackage != null) config.sdImage.ubootPackage;
+
       buildCommand = ''
         mkdir -p $out/nix-support $out/sd-image
         export img=$out/sd-image/${config.sdImage.imageName}
@@ -249,26 +252,28 @@ in
         zstd -d --no-progress "${rootfsImage}" -o ./root-fs.img
 
         blockSize=512
-        partitionsOffset=${toString config.sdImage.partitionsOffset}
+        partitionsOffsetBlocks=$((${toString config.sdImage.partitionsOffset} * 1024 * 1024 / blockSize))
 
         ${if hasFirmwarePartition then ''
         firmwarePartitionNumber=1
-        firmwarePartitionOffset=$partitionsOffset
+        firmwarePartitionOffsetBlocks=$partitionsOffsetBlocks
         firmwarePartitionSizeBlocks=$((${toString config.sdImage.firmwarePartitionSize} * 1024 * 1024 / blockSize))
-        firmwarePartitionSize=$((firmwarePartitionSizeBlocks * blockSize))
+        firmwarePartitionSizeBytes=$((firmwarePartitionSizeBlocks * blockSize))
         rootPartitionNumber=2
-        rootPartitionOffset=$((firmwarePartitionOffset + firmwarePartitionSize))
+        rootPartitionOffsetBlocks=$((firmwarePartitionOffsetBlocks + firmwarePartitionSizeBlocks))
         '' else ''
         rootPartitionNumber=1
-        rootPartitionOffset=$partitionsOffset
+        rootPartitionOffsetBlocks=$partitionsOffsetBlocks
         ''}
+
+        rootPartitionOffsetBytes=$((rootPartitionOffsetBlocks * blockSize))
 
         # Create the image file sized to fit /boot/firmware and /, plus slack for the gap.
         rootPartitionSizeBlocks=$(du -B $blockSize --apparent-size ./root-fs.img | awk '{ print $1 }')
-        rootPartitionSize=$((rootPartitionSizeBlocks * blockSize))
+        rootPartitionSizeBytes=$((rootPartitionSizeBlocks * blockSize))
 
-        imageSize=$((rootPartitionOffset + rootPartitionSize))
-        truncate -s $imageSize $img
+        imageSizeBytes=$((rootPartitionOffsetBytes + rootPartitionSizeBytes))
+        truncate -s $imageSizeBytes $img
 
         # type=b is 'W95 FAT32', type=83 is 'Linux'.
         # The "bootable" partition is where u-boot will look file for the bootloader
@@ -278,18 +283,20 @@ in
             label-id: ${config.sdImage.firmwarePartitionID}
 
             ${lib.optionalString hasFirmwarePartition ''
-            start=$firmwarePartitionOffset, size=$firmwarePartitionSizeBlocks, type=b
+            start=$firmwarePartitionOffsetBlocks, size=$firmwarePartitionSizeBlocks, type=b
             ''}
-            start=$rootPartitionOffset, type=83, bootable
+            start=$rootPartitionOffsetBlocks, type=83, bootable
         EOF
 
         # Copy the rootfs into the SD image
         eval $(partx $img -o START,SECTORS --nr $rootPartitionNumber --pairs)
+        echo "Root partition: $START,$SECTORS"
         dd conv=notrunc if=./root-fs.img of=$img seek=$START count=$SECTORS
 
         ${lib.optionalString hasFirmwarePartition ''
         # Create a FAT32 /boot/firmware partition of suitable size into firmware_part.img
         eval $(partx $img -o START,SECTORS --nr $firmwarePartitionNumber --pairs)
+        echo "Firmware partition: $START,$SECTORS"
         truncate -s $((SECTORS * blockSize)) firmware_part.img
         faketime "1970-01-01 00:00:00" mkfs.vfat -i ${config.sdImage.firmwarePartitionID} -n ${config.sdImage.firmwarePartitionName} firmware_part.img
 
@@ -306,13 +313,14 @@ in
 
         ${lib.optionalString (config.sdImage.ubootPackage != null) ''
         # Install U-Boot binary image
+        echo "Install U-Boot: ${config.sdImage.ubootPackage}/${config.sdImage.ubootBinary} ${toString config.sdImage.ubootOffset}"
         dd if=${config.sdImage.ubootPackage}/${config.sdImage.ubootBinary} of=$img bs=1024 seek=${toString config.sdImage.ubootOffset} conv=notrunc
         ''}
 
         ${config.sdImage.postBuildCommands}
 
         ${lib.optionalString config.sdImage.compressImage
-          (if config.sdImage.compressImage == "zstd" then ''
+          (if config.sdImage.compressImageMethod == "zstd" then ''
             zstd -T$NIX_BUILD_CORES ${compressLevelCmdLineArg} --rm $img
           '' else ''
             xz -T$NIX_BUILD_CORES -F${config.sdImage.compressImageMethod} ${compressLevelCmdLineArg} $img

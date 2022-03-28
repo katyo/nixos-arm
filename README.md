@@ -1,17 +1,19 @@
-# WIP Nixos images for Xunlong OrangePi Boards
+# WIP Nixos images for ARM-base SBCs
 
-Work-in-progress SD card images for Xunlong OrangePi Zero2 and possibly other sunxi64 boards.
-
+Work-in-progress SD card images for ARM-based boards.
 This project was started from scratch as a hobby.
 I adapted patches for linux kernel integrated into armbian.
+
+## Xunlong boards
+
 I integrated patches from Xunlong linux kernel and Debian/Ubuntu images.
 
 Related repos:
 
 - [U-Boot](https://github.com/katyo/u-boot/tree/opiz2)
-- [Linux kernel](https://github.com/katyo/linux/tree/kayo-h616-5.15.y)
+- [Linux kernel](https://github.com/katyo/linux/tree/kayo-h616-5.17.y)
 
-## Improvements
+### OrangePi Zero2
 
 1. Partially reworked sd-image generation module
   - Firmware (vfat) partition which is used on UEFI enabled boards like Raspberry Pi now is optional
@@ -29,15 +31,12 @@ Related repos:
   - Added board device-tree for OrangePi Zero2
   - Added themperature sensor dtiver
   - Added onboard ethernet phy support
-  - Added Unisoc UWE5622 wifi/bluetooth drivers
-  - Added Cedrus hardware accelerated video codec support
+  - Added Unisoc UWE5622 wifi/bluetooth drivers:
+    - [x] Wifi
+    - [ ] Bluetooth
+  - Added Cedrus hardware accelerated video codec support (not tested)
   - Added HDMI support fixes
-  - Added Sound codec support
+    - [x] 3D rendering via panfrost tested using kmscube
+  - Added Sound codec support (not tested)
   - Added fixes for RTC driver
   - Added custom configuration
-
-## Need to be done
-
-- Onboard Wifi
-- Onboard Bluetooth
-- Onboard Sound Codec

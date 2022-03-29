@@ -3,6 +3,9 @@
     ../../arch/sunxi
   ];
   boot = {
+    kernelModules = [
+      "sprdwl_ng" # onboard wifi
+    ];
     blacklistedKernelModules = [
       #"panfrost"
     ];

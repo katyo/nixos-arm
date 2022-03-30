@@ -13,7 +13,7 @@
   };
   hardware = {
     firmware = with pkgs; [
-      wcnmodem-firmware
+      uwe5622-firmware
     ];
   };
 }

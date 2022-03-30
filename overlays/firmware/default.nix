@@ -1,5 +1,5 @@
 self: super:
 let pkgs = self;
 in {
-  wcnmodem-firmware = pkgs.callPackage ./wcnmodem.nix {};
+  uwe5622-firmware = pkgs.callPackage ./uwe5622.nix {};
 }

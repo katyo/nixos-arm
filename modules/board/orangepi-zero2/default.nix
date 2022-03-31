@@ -1,6 +1,7 @@
-{ pkgs, lib, config, ... }: {
+{ pkgs, ... }: {
   imports = [
     ../../arch/sunxi
+    ../../low-ram.nix
   ];
   boot = {
     kernelModules = [

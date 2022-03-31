@@ -1,10 +1,12 @@
-{ pkgs, lib, config, ... }: {
+{ lib, ... }:
+with lib;
+{
   users.extraUsers.root = {
-    initialPassword = "nixospi";
+    initialPassword = mkDefault "nixospi";
   };
 
   services.openssh = {
-    enable = true;
-    permitRootLogin = "yes";
+    enable = mkDefault true;
+    permitRootLogin = mkDefault "yes";
   };
 }

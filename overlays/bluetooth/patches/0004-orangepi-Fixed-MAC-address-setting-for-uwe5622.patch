@@ -1,0 +1,222 @@
+From b288eb2ce4e15434ec1b65efa004d97b1d8a1a47 Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Sat, 2 Apr 2022 12:09:12 +0500
+Subject: [PATCH 4/4] orangepi: Fixed MAC address setting for uwe5622
+
+---
+ tools/hciattach_sprd.c | 151 ++++++-----------------------------------
+ 1 file changed, 20 insertions(+), 131 deletions(-)
+
+diff --git a/tools/hciattach_sprd.c b/tools/hciattach_sprd.c
+index f34ad55ed..5398b5614 100644
+--- a/tools/hciattach_sprd.c
++++ b/tools/hciattach_sprd.c
+@@ -116,6 +116,7 @@
+ 
+ #define BT_CONFIG_PATH             "/lib/firmware"
+ #define BT_HC_HDR_SIZE             (sizeof(HC_BT_HDR))
++#define BT_MAC_ADDR_PATH           "/sys/class/addr_mgmt/addr_bt"
+ #define BT_VND_OP_RESULT_SUCCESS   0
+ #define BT_VND_OP_RESULT_FAIL      1
+ #define MSG_STACK_TO_HC_HCI_CMD    0x2000
+@@ -138,7 +139,7 @@ typedef struct {
+ typedef struct {
+ 	uint32_t  device_class;
+ 	uint8_t  feature_set[16];
+-	uint8_t  device_addr[6];
++	bdaddr_t  device_addr;
+ 	uint16_t  comp_id;
+ 	uint8_t g_sys_uart0_communication_supported;
+ 	uint8_t cp2_log_mode;
+@@ -213,7 +214,7 @@ typedef struct {
+ 	int size;
+ } conf_entry_t;
+ 
+-static uint8_t local_bdaddr[6]={0x10, 0x11, 0x12, 0x13, 0x14, 0x15};
++static bdaddr_t local_bdaddr = { .b = { 0x10, 0x11, 0x12, 0x13, 0x14, 0x15 } };
+ static pskey_config_t marlin3_pskey;
+ static rf_config_t marlin3_rf_config;
+ static int s_bt_fd = -1;
+@@ -221,7 +222,7 @@ static int s_bt_fd = -1;
+ static const conf_entry_t marlin3_pksey_table[] = {
+ 	CONF_ITEM_TABLE(device_class, 0, marlin3_pskey, 1),
+ 	CONF_ITEM_TABLE(feature_set, 0, marlin3_pskey, 16),
+-	CONF_ITEM_TABLE(device_addr, 0, marlin3_pskey, 6),
++	CONF_ITEM_TABLE(device_addr.b, 0, marlin3_pskey, 6),
+ 	CONF_ITEM_TABLE(comp_id, 0, marlin3_pskey, 1),
+ 	CONF_ITEM_TABLE(g_sys_uart0_communication_supported, 0, marlin3_pskey, 1),
+ 	CONF_ITEM_TABLE(cp2_log_mode, 0, marlin3_pskey, 1),
+@@ -335,138 +336,26 @@ static void parse_number(char *p_conf_name, char *p_conf_value, void *buf, int l
+ 	} while (--len);
+ }
+ 
+-static unsigned char compare_char(unsigned char ch)
++static void set_mac_address(bdaddr_t *addr)
+ {
+-		unsigned char data = 0x0;
+-
+-		switch(ch)
+-		{
+-			case 0:
+-			case '0':
+-				data = 0x0;
+-				break;
+-			case 1:
+-			case '1':
+-				data = 0x1;
+-				break;
+-			case 2:
+-			case '2':
+-				data = 0x2;
+-				break;
+-			case 3:
+-			case '3':
+-				data = 0x3;
+-				break;
+-			case 4:
+-			case '4':
+-				data = 0x4;
+-				break;
+-			case 5:
+-			case '5':
+-				data = 0x5;
+-				break;
+-			case 6:
+-			case '6':
+-				data = 0x6;
+-				break;
+-			case 7:
+-			case '7':
+-				data = 0x7;
+-				break;
+-			case 8:
+-			case '8':
+-				data = 0x8;
+-				break;
+-			case 9:
+-			case '9':
+-				data = 0x9;
+-				break;
+-			case 10:
+-			case 'a':
+-			case 'A':
+-				data = 0xA;
+-				break;
+-			case 11:
+-			case 'b':
+-			case 'B':
+-				data = 0xB;
+-				break;
+-			case 12:
+-			case 'c':
+-			case 'C':
+-				data = 0xC;
+-				break;
+-			case 13:
+-			case 'd':
+-			case 'D':
+-				data = 0xD;
+-				break;
+-			case 14:
+-			case 'e':
+-			case 'E':
+-				data = 0xE;
+-				break;
+-			case 15:
+-			case 'f':
+-			case 'F':
+-				data = 0xF;
+-				break;
+-		}
+-		return data;
+-}
+-
+-static void set_mac_address(uint8_t *addr)
+-{
+-	int i = 0;
+-	unsigned char buff[255];
+-	unsigned char tmp[5];
+-	unsigned char str;
+-	unsigned char str2;
++	char str[255];
+ 	FILE *fp;
+ 
+-	SPRD_DBG("%s", __func__);
+-	//for (i = 0; i < 6; i++)
+-	//	addr[5-i] = (unsigned char)local_bdaddr[i];
++	SPRD_DBG("Set mac address from '%s'", BT_MAC_ADDR_PATH);
+ 
+-	fp = fopen("/sys/class/addr_mgt/addr_bt", "r+");
+-	if (fscanf(fp, "%s", buff) != 1) {
+-		SPRD_ERR("Unable to get addr from '/sys/class/addr_mgt/addr_bt'");
++	fp = fopen(BT_MAC_ADDR_PATH, "r+");
++
++	if (fp == NULL || fscanf(fp, "%s", str) != 1) {
++		SPRD_ERR("Unable to get addr from '%s'", BT_MAC_ADDR_PATH);
+ 	}
+-	fclose(fp);
+-
+-	sprintf((char*)tmp, "%c%c", buff[0], buff[1]);
+-	str = compare_char(tmp[0]);
+-	str2 = compare_char(tmp[1]);
+-	local_bdaddr[0] = (str << 4) | str2;
+-
+-	sprintf((char*)tmp, "%c%c", buff[3], buff[4]);
+-	str = compare_char(tmp[0]);
+-	str2 = compare_char(tmp[1]);
+-	local_bdaddr[1] = (str << 4) | str2;
+-
+-	sprintf((char*)tmp, "%c%c", buff[6], buff[7]);
+-	str = compare_char(tmp[0]);
+-	str2 = compare_char(tmp[1]);
+-	local_bdaddr[2] = (str << 4) | str2;
+-
+-	sprintf((char*)tmp, "%c%c", buff[9], buff[10]);
+-	str = compare_char(tmp[0]);
+-	str2 = compare_char(tmp[1]);
+-	local_bdaddr[3] = (str << 4) | str2;
+-
+-	sprintf((char*)tmp, "%c%c", buff[12], buff[13]);
+-	str = compare_char(tmp[0]);
+-	str2 = compare_char(tmp[1]);
+-	local_bdaddr[4] = (str << 4) | str2;
+-
+-	sprintf((char*)tmp, "%c%c", buff[15], buff[16]);
+-	str = compare_char(tmp[0]);
+-	str2 = compare_char(tmp[1]);
+-	local_bdaddr[5] = (str << 4) | str2;
+-
+-	for (i = 0; i < 6; i++) {
+-		addr[5-i] = (unsigned char)local_bdaddr[i];
++
++	if (fp != NULL) {
++		fclose(fp);
+ 	}
++
++	str2ba(str, &local_bdaddr);
++
++	baswap(addr, &local_bdaddr);
+ }
+ 
+ static void vnd_load_configure(const char *p_path, const conf_entry_t *entry)
+@@ -743,7 +632,7 @@ static int marlin3_pskey_preload(void *arg)
+ 		UINT8_TO_STREAM(p, marlin3_pskey.feature_set[i]);
+ 
+ 	for (i = 0; i < 6; i++)
+-		UINT8_TO_STREAM(p, marlin3_pskey.device_addr[i]);
++		UINT8_TO_STREAM(p, marlin3_pskey.device_addr.b[i]);
+ 
+ 	UINT16_TO_STREAM(p, marlin3_pskey.comp_id);
+ 	UINT8_TO_STREAM(p, marlin3_pskey.g_sys_uart0_communication_supported);
+@@ -830,7 +719,7 @@ int sprd_init(int fd, struct termios *ti)
+ 	memset(&marlin3_rf_config, 0, sizeof(marlin3_rf_config));
+ 	vnd_load_configure(BT_CONFIG_PATH "/bt_configure_pskey.ini", &marlin3_pksey_table[0]);
+ 	vnd_load_configure(BT_CONFIG_PATH "/bt_configure_rf.ini", &marlin3_rf_table[0]);
+-	set_mac_address(marlin3_pskey.device_addr);
++	set_mac_address(&marlin3_pskey.device_addr);
+ 
+ 	marlin3_pskey_preload(NULL);
+ 	recv = bt_vendor_alloc(RESPONSE_LENGTH);
+-- 
+2.33.1
+

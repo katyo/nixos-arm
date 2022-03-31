@@ -5,6 +5,7 @@
   boot = {
     kernelModules = [
       "sprdwl_ng" # onboard wifi
+      "sprdbt_tty" # onboard bluetooth
     ];
     blacklistedKernelModules = [
       #"panfrost"

@@ -1,6 +1,7 @@
-{ pkgs, ... }: {
+{ lib, pkgs, ... }: {
   imports = [
     ../../arch/sunxi
+    ../../periph/bluetooth
     ../../low-ram.nix
   ];
   boot = {
@@ -17,5 +18,10 @@
     firmware = with pkgs; [
       uwe5622-firmware
     ];
+    bluetooth = with lib; {
+      enable = mkDefault true;
+      package = pkgs.bluez_opi;
+      attach.uwe5622.enable = mkDefault true;
+    };
   };
 }

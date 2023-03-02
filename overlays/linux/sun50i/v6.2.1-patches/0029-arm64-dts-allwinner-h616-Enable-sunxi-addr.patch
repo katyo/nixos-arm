@@ -1,0 +1,42 @@
+From 4a4d4c0360864fa82cd87482ea2c02c816d6be8d Mon Sep 17 00:00:00 2001
+From: orangepi-xunlong <258384131@qq.com>
+Date: Wed, 9 Feb 2022 17:28:36 +0800
+Subject: [PATCH 029/114] arm64: dts: allwinner: h616: Enable sunxi-addr
+
+---
+ .../arm64/boot/dts/allwinner/sun50i-h616.dtsi | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi b/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
+index f2ce76e7c7bb..ed32c21d4982 100644
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
+@@ -1186,6 +1186,25 @@ ths: thermal-sensor@5070400 {
+ 			nvmem-cell-names = "calibration";
+ 			#thermal-sensor-cells = <1>;
+ 		};
++
++		dump_reg: dump_reg@20000 {
++			compatible = "allwinner,sunxi-dump-reg";
++			reg = <0x0 0x03001000 0x0 0x0f20>;
++			status = "okay";
++		};
++
++		sunxi-info {
++			compatible = "allwinner,sun50i-h616-sys-info";
++			status = "okay";
++		};
++
++		addr_mgmt: addr-mgmt {
++			compatible = "allwinner,sunxi-addr-mgmt";
++			type_addr_wifi = <0x2>;
++			type_addr_bt = <0x2>;
++			type_addr_eth = <0x2>;
++			status = "okay";
++		};
+ 	};
+ 
+ 	thermal-zones {
+-- 
+2.38.3
+

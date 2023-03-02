@@ -1,0 +1,58 @@
+From f53deb92bb2fdf1ee9f419766b0d429afa16a99f Mon Sep 17 00:00:00 2001
+From: Andre Przywara <andre.przywara@arm.com>
+Date: Mon, 10 May 2021 11:01:31 +0100
+Subject: [PATCH 018/114] phy: sun4i-usb: Introduce port2 SIDDQ quirk
+
+At least the Allwinner H616 SoC requires a weird quirk to make most
+USB PHYs work: Only port2 works out of the box, but all other ports
+need some help from this port2 to work correctly: The CLK_BUS_PHY2 and
+RST_USB_PHY2 clock and reset need to be enabled, and the SIDDQ bit in
+the PMU PHY control register needs to be cleared. For this register to
+be accessible, CLK_BUS_ECHI2 needs to be ungated. Don't ask ....
+
+Instead of disguising this as some generic feature, do exactly that
+in our PHY init:
+If the quirk bit is set, and we initialise a PHY other than PHY2, ungate
+this one special clock, and clear the SIDDQ bit. We can pull in the
+other required clocks via the DT.
+
+Signed-off-by: Andre Przywara <andre.przywara@arm.com>
+---
+ drivers/phy/allwinner/phy-sun4i-usb.c | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/drivers/phy/allwinner/phy-sun4i-usb.c b/drivers/phy/allwinner/phy-sun4i-usb.c
+index ee4a4f123fba..2d939f7458d2 100644
+--- a/drivers/phy/allwinner/phy-sun4i-usb.c
++++ b/drivers/phy/allwinner/phy-sun4i-usb.c
+@@ -376,6 +376,27 @@ static int sun4i_usb_phy_init(struct phy *_phy)
+ 		queue_delayed_work(system_wq, &data->detect, 0);
+ 	}
+ 
++	/* Some PHYs on some SoCs need the help of PHY2 to work. */
++	if (data->cfg->needs_phy2_siddq && phy->index != 2) {
++		struct sun4i_usb_phy *phy2 = &data->phys[2];
++
++		/*
++		 * This extra clock is just needed to access the
++		 * REG_HCI_PHY_CTL PMU register for PHY2.
++		 */
++		ret = clk_prepare_enable(phy2->clk2);
++		if (ret)
++			return ret;
++
++		if (phy2->pmu && data->cfg->hci_phy_ctl_clear) {
++			val = readl(phy2->pmu + REG_HCI_PHY_CTL);
++			val &= ~data->cfg->hci_phy_ctl_clear;
++			writel(val, phy2->pmu + REG_HCI_PHY_CTL);
++		}
++
++		clk_disable_unprepare(phy->clk2);
++	}
++
+ 	return 0;
+ }
+ 
+-- 
+2.38.3
+

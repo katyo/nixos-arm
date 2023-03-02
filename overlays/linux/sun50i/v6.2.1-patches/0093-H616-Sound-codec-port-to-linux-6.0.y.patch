@@ -1,0 +1,82 @@
+From 5431369b39d4dae1d02cfb2034415daaace51750 Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Sun, 16 Oct 2022 00:12:26 +0500
+Subject: [PATCH 093/114] H616: Sound codec port to linux-6.0.y
+
+---
+ sound/soc/sunxi/sun50iw9-codec.c | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/sound/soc/sunxi/sun50iw9-codec.c b/sound/soc/sunxi/sun50iw9-codec.c
+index 676971816c8f..cf54b60f864b 100644
+--- a/sound/soc/sunxi/sun50iw9-codec.c
++++ b/sound/soc/sunxi/sun50iw9-codec.c
+@@ -188,7 +188,7 @@ static int sun50i_h616_codec_prepare(struct snd_pcm_substream *substream,
+ 	regmap_write(scodec->regmap, SUNXI_DAC_FIFO_STA,
+ 	   (0x1 << SUNXI_DAC_TXE_INT | 1 << SUNXI_DAC_TXU_INT | 0x1 << SUNXI_DAC_TXO_INT));
+ 	regmap_write(scodec->regmap, SUNXI_DAC_CNT, 0);
+-	
++
+ 	return 0;
+ }
+ 
+@@ -365,7 +365,7 @@ static int sun50i_h616_codec_hw_params(struct snd_pcm_substream *substream,
+ 					SUNXI_DAC_FIFOC,
+ 					(0x1 << SUNXI_DAC_FIFOC_TX_SAMPLE_BITS),
+ 					(0x0 << SUNXI_DAC_FIFOC_TX_SAMPLE_BITS));
+-		} 
++		}
+ 		break;
+ 	case	SNDRV_PCM_FORMAT_S24_LE:
+ 		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+@@ -493,7 +493,7 @@ static int sunxi_lineout_event(struct snd_soc_dapm_widget *w,
+ 		regmap_update_bits(scodec->regmap, SUNXI_DAC_AC_RAMP_REG,
+ 			(0x1 << SUNXI_RDEN), (0x1 << SUNXI_RDEN));
+ 		msleep(25);
+-	
++
+ 		regmap_update_bits(scodec->regmap, SUNXI_DAC_AC_DAC_REG,
+ 				(0x1 << SUNXI_LINEOUTL_EN) | (0x1 << SUNXI_LINEOUTR_EN),
+ 				(0x1 << SUNXI_LINEOUTL_EN) | (0x1 << SUNXI_LINEOUTR_EN));
+@@ -503,7 +503,7 @@ static int sunxi_lineout_event(struct snd_soc_dapm_widget *w,
+ 		regmap_update_bits(scodec->regmap, SUNXI_DAC_AC_RAMP_REG,
+ 					(0x1 << SUNXI_RDEN), (0x0 << SUNXI_RDEN));
+ 		msleep(25);
+-		
++
+ 		regmap_update_bits(scodec->regmap, SUNXI_DAC_AC_DAC_REG,
+ 			(0x1 << SUNXI_LINEOUTL_EN) | (0x1 << SUNXI_LINEOUTR_EN),
+ 			(0x0 << SUNXI_LINEOUTL_EN) | (0x0 << SUNXI_LINEOUTR_EN));
+@@ -605,7 +605,7 @@ static const struct snd_soc_component_driver sun50i_h616_codec_codec = {
+ 	.idle_bias_on		= 1,
+ 	.use_pmdown_time	= 1,
+ 	.endianness		= 1,
+-	.non_legacy_dai_naming	= 1,
++	.legacy_dai_naming	= 0,
+ };
+ 
+ static const struct snd_soc_component_driver sun50i_h616_codec_component = {
+@@ -800,9 +800,9 @@ static ssize_t show_audio_reg(struct device *dev,
+ 	int count = 0, i = 0;
+ 	unsigned int reg_val;
+ 	unsigned int size = ARRAY_SIZE(reg_labels);
+-	
++
+ 	count += sprintf(buf, "dump audiocodec reg:\n");
+-	
++
+ 	while ((i < size) && (reg_labels[i].name != NULL)) {
+ 			regmap_read(codec_regmap_debug,
+ 							reg_labels[i].address, &reg_val);
+@@ -811,7 +811,7 @@ static ssize_t show_audio_reg(struct device *dev,
+ 					reg_val, reg_labels[i].value);
+ 			i++;
+ 	}
+-	
++
+ 	return count;
+ }
+ 
+-- 
+2.38.3
+

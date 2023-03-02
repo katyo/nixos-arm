@@ -1,0 +1,27 @@
+From 4dae7518e5c95860276ffad65899f22a5a7a54df Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Mon, 6 Jun 2022 22:18:39 +0500
+Subject: [PATCH 079/114] [crazy-hotfix] ble: uwe5622: Fix can't scan
+
+---
+ net/bluetooth/hci_sync.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/net/bluetooth/hci_sync.c b/net/bluetooth/hci_sync.c
+index c3fd71d1e415..981f3896dd4e 100644
+--- a/net/bluetooth/hci_sync.c
++++ b/net/bluetooth/hci_sync.c
+@@ -3778,8 +3778,10 @@ static int hci_setup_link_policy_sync(struct hci_dev *hdev)
+ 		link_policy |= HCI_LP_HOLD;
+ 	if (lmp_sniff_capable(hdev))
+ 		link_policy |= HCI_LP_SNIFF;
++#if !IS_ENABLED(CONFIG_AW_WIFI_DEVICE_UWE5622) && !IS_ENABLED(CONFIG_RK_WIFI_DEVICE_UWE5622)
+ 	if (lmp_park_capable(hdev))
+ 		link_policy |= HCI_LP_PARK;
++#endif /* !IS_ENABLED(CONFIG_AW_WIFI_DEVICE_UWE5622) && !IS_ENABLED(CONFIG_RK_WIFI_DEVICE_UWE5622) */
+ 
+ 	cp.policy = cpu_to_le16(link_policy);
+ 
+-- 
+2.38.3
+

@@ -1,0 +1,222 @@
+From 6dd91e12bcdba78c3fb00d6fcc59855f1ded2b35 Mon Sep 17 00:00:00 2001
+From: orangepi-xunlong <258384131@qq.com>
+Date: Fri, 8 Apr 2022 19:39:03 +0800
+Subject: [PATCH 082/114] arm64: dts: allwinner: h616: add opp table
+
+---
+ .../dts/allwinner/sun50i-h616-cpu-opp.dtsi    | 60 +++++++++++++++++
+ .../allwinner/sun50i-h616-orangepi-zero2.dts  | 13 ++--
+ .../arm64/boot/dts/allwinner/sun50i-h616.dtsi | 64 +++++++++++++------
+ 3 files changed, 114 insertions(+), 23 deletions(-)
+ create mode 100644 arch/arm64/boot/dts/allwinner/sun50i-h616-cpu-opp.dtsi
+
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h616-cpu-opp.dtsi b/arch/arm64/boot/dts/allwinner/sun50i-h616-cpu-opp.dtsi
+new file mode 100644
+index 000000000000..4b296db07af6
+--- /dev/null
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h616-cpu-opp.dtsi
+@@ -0,0 +1,60 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++
++/ {
++	cpu_opp_table: opp-table-cpu {
++		compatible = "operating-points-v2";
++		opp-shared;
++
++		opp-480000000 {
++			opp-hz = /bits/ 64 <480000000>;
++			opp-microvolt = <820000>;
++			clock-latency-ns = <244144>; /* 8 32k periods */
++		};
++
++		opp-600000000 {
++			opp-hz = /bits/ 64 <600000000>;
++			opp-microvolt = <820000>;
++			clock-latency-ns = <244144>; /* 8 32k periods */
++		};
++
++		opp-792000000 {
++			opp-hz = /bits/ 64 <792000000>;
++			opp-microvolt = <860000>;
++			clock-latency-ns = <244144>; /* 8 32k periods */
++		};
++
++		opp-1008000000 {
++			opp-hz = /bits/ 64 <1008000000>;
++			opp-microvolt = <900000>;
++			clock-latency-ns = <244144>; /* 8 32k periods */
++		};
++
++		opp-1200000000 {
++			opp-hz = /bits/ 64 <1200000000>;
++			opp-microvolt = <960000>;
++			clock-latency-ns = <244144>; /* 8 32k periods */
++		};
++
++		opp-1512000000 {
++			opp-hz = /bits/ 64 <1512000000>;
++			opp-microvolt = <1100000>;
++			clock-latency-ns = <244144>; /* 8 32k periods */
++		};
++	};
++};
++
++&cpu0 {
++	operating-points-v2 = <&cpu_opp_table>;
++};
++
++&cpu1 {
++	operating-points-v2 = <&cpu_opp_table>;
++};
++
++&cpu2 {
++	operating-points-v2 = <&cpu_opp_table>;
++};
++
++&cpu3 {
++	operating-points-v2 = <&cpu_opp_table>;
++};
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts b/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts
+index 8b2867418dc7..cb5ffbea9f44 100644
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts
+@@ -10,6 +10,7 @@
+ #include <dt-bindings/gpio/gpio.h>
+ #include <dt-bindings/interrupt-controller/arm-gic.h>
+ #include <dt-bindings/leds/common.h>
++#include "sun50i-h616-cpu-opp.dtsi"
+ 
+ / {
+ 	model = "OrangePi Zero2";
+@@ -192,15 +193,15 @@ &ohci3 {
+ 	status = "okay";
+ };
+ 
+-&r_rsb {
++&r_i2c {
+ 	status = "okay";
+ 
+-	axp305: pmic@745 {
++	axp305: pmic@36 {
+ 		compatible = "x-powers,axp305", "x-powers,axp805",
+ 			     "x-powers,axp806";
+ 		interrupt-controller;
+ 		#interrupt-cells = <1>;
+-		reg = <0x745>;
++		reg = <0x36>;
+ 
+ 		x-powers,self-working-mode;
+ 		vina-supply = <&reg_vcc5v>;
+@@ -268,7 +269,7 @@ cldo3 {
+ 			reg_dcdca: dcdca {
+ 				regulator-always-on;
+ 				regulator-min-microvolt = <810000>;
+-				regulator-max-microvolt = <1100000>;
++				regulator-max-microvolt = <1160000>;
+ 				regulator-name = "vdd-cpu";
+ 			};
+ 
+@@ -308,6 +309,10 @@ &pio {
+ 	vcc-pi-supply = <&reg_aldo1>;
+ };
+ 
++&cpu0 {
++        cpu-supply = <&reg_dcdca>;
++};
++
+ &spi0  {
+ 	status = "okay";
+ 	pinctrl-names = "default";
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi b/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
+index f48de4ee728c..81800e8b0e1b 100644
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
+@@ -1305,40 +1305,66 @@ cpu-thermal {
+ 			polling-delay-passive = <500>;
+ 			polling-delay = <1000>;
+ 			thermal-sensors = <&ths 2>;
+-			sustainable-power = <1000>;
+-			k_po = <20>;
+-			k_pu = <40>;
+-			k_i = <0>;
+ 
+ 			trips {
+-				cpu_threshold: trip-point@0 {
+-					temperature = <60000>;
++				cpu_warm: cpu_warm {
++					temperature = <75000>;
++					hysteresis = <2000>;
+ 					type = "passive";
+-					hysteresis = <0>;
+ 				};
+-				cpu_target: trip-point@1 {
+-					temperature = <70000>;
++
++				cpu_hot_pre: cpu_hot_pre {
++					temperature = <80000>;
++					hysteresis = <2000>;
++					type = "passive";
++				};
++
++				cpu_hot: cpu_hot {
++					temperature = <85000>;
++					hysteresis = <2000>;
++					type = "passive";
++				};
++
++				cpu_very_hot: cpu_very_hot {
++					temperature = <90000>;
++					hysteresis = <2000>;
+ 					type = "passive";
+-					hysteresis = <0>;
++				};
++
++				cpu_crit: cpu_crit {
++					temperature = <105000>;
++					hysteresis = <2000>;
++					type = "critical";
+ 				};
+ 			};
+ 
+ 			cooling-maps {
+-				map0 {
+-					trip = <&cpu_target>;
+-					cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+-							 <&cpu1 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+-							 <&cpu2 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+-							 <&cpu3 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++				cpu_warm_limit_cpu {
++					trip = <&cpu_warm>;
++					cooling-device = <&cpu0 THERMAL_NO_LIMIT 2>;
++				};
++
++				cpu_hot_pre_limit_cpu {
++					trip = <&cpu_hot_pre>;
++					cooling-device = <&cpu0 2 3>;
++				};
++
++				cpu_hot_limit_cpu {
++					trip = <&cpu_hot>;
++					cooling-device = <&cpu0 3 4>;
++				};
++
++				cpu_very_hot_limit_cpu {
++					trip = <&cpu_very_hot>;
++					cooling-device = <&cpu0 5 THERMAL_NO_LIMIT>;
+ 				};
+ 			};
+ 		};
+ 
+ 		gpu-thermal {
+-			polling-delay-passive = <500>;
+-			polling-delay = <1000>;
++			polling-delay-passive = <0>;
++			polling-delay = <0>;
+ 			thermal-sensors = <&ths 0>;
+-			sustainable-power = <1100>;
+ 		};
+ 
+ 		ve-thermal {
+-- 
+2.38.3
+

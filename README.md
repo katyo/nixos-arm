@@ -11,7 +11,8 @@ I integrated patches from Xunlong linux kernel and Debian/Ubuntu images.
 Related repos:
 
 - [U-Boot](https://github.com/katyo/u-boot/tree/opiz2)
-- [Linux kernel](https://github.com/katyo/linux/tree/kayo-h616-5.17.y)
+- [Linux](https://github.com/katyo/linux/tree/kayo-h616-5.17.y)
+- [Bluez](https://github.com/katyo/bluez/tree/orangepi)
 
 ### OrangePi Zero2
 
@@ -40,3 +41,13 @@ Related repos:
   - Added Sound codec support (not tested)
   - Added fixes for RTC driver
   - Added custom configuration
+
+## Installation
+
+1. Download unpack and write SD image to compatible SD-card
+2. Insert SD-card and supply power onto the board
+3. When system is started connect via ssh or serial port. (user: root, password: nixospi)
+4. Run `nixos-generate-config` to get initial configuration in `/etc/nixos`
+5. Edit `/etc/nixos/configuration.nix` manually (add users, enable services, system packages and etc.)
+6. Run `nix-channel --update` and `nixos-rebuild switch` to finish installation
+7. Reboot

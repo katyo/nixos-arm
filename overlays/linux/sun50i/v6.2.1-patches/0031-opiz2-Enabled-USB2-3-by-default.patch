@@ -1,0 +1,46 @@
+From 826476cebaaa4c5e891d632febb4a5a48ada1d0f Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Sun, 13 Feb 2022 12:44:57 +0500
+Subject: [PATCH 031/114] opiz2: Enabled USB2/3 by default
+
+---
+ .../dts/allwinner/sun50i-h616-orangepi-zero2.dts | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts b/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts
+index 103bc082b670..3032d4f519af 100644
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts
+@@ -109,6 +109,14 @@ &ehci1 {
+ 	status = "okay";
+ };
+ 
++&ehci2 {
++	status = "okay";
++};
++
++&ehci3 {
++	status = "okay";
++};
++
+ &hdmi {
+ 	hvcc-supply = <&reg_bldo1>;
+ 	status = "okay";
+@@ -166,6 +174,14 @@ &ohci1 {
+ 	status = "okay";
+ };
+ 
++&ohci2 {
++	status = "okay";
++};
++
++&ohci3 {
++	status = "okay";
++};
++
+ &r_rsb {
+ 	status = "okay";
+ 
+-- 
+2.38.3
+

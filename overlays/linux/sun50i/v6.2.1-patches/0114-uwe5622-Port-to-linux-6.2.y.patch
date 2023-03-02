@@ -1,0 +1,34 @@
+From 78aee5e1ceec51a36bfcd8a61227e3119b9056e1 Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Mon, 27 Feb 2023 17:50:12 +0500
+Subject: [PATCH 114/114] uwe5622: Port to linux 6.2.y
+
+---
+ drivers/net/wireless/uwe5622/unisocwifi/npi.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/net/wireless/uwe5622/unisocwifi/npi.c b/drivers/net/wireless/uwe5622/unisocwifi/npi.c
+index 90b333b701b4..3f890f2cf525 100644
+--- a/drivers/net/wireless/uwe5622/unisocwifi/npi.c
++++ b/drivers/net/wireless/uwe5622/unisocwifi/npi.c
+@@ -104,7 +104,7 @@ static int sprdwl_cmd_set_psm_cap(struct sprdwl_vif *vif)
+ 	return ret;
+ }
+ 
+-static int sprdwl_npi_pre_doit(const struct genl_ops *ops,
++static int sprdwl_npi_pre_doit(const struct genl_split_ops *split_ops,
+ 				   struct sk_buff *skb, struct genl_info *info)
+ {
+ 	struct net_device *ndev;
+@@ -135,7 +135,7 @@ static int sprdwl_npi_pre_doit(const struct genl_ops *ops,
+ 	return 0;
+ }
+ 
+-static void sprdwl_npi_post_doit(const struct genl_ops *ops,
++static void sprdwl_npi_post_doit(const struct genl_split_ops *split_ops,
+ 				 struct sk_buff *skb, struct genl_info *info)
+ {
+ 	if (info->user_ptr[0])
+-- 
+2.38.3
+

@@ -1,0 +1,26 @@
+From 89db9057894fd70092f45bd778a9fce2e0d789b6 Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Mon, 28 Mar 2022 23:29:10 +0500
+Subject: [PATCH 046/114] sunxi-addr: Fixed compilation
+
+---
+ drivers/misc/sunxi-addr/sunxi-addr.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/drivers/misc/sunxi-addr/sunxi-addr.c b/drivers/misc/sunxi-addr/sunxi-addr.c
+index ece53d444372..cbc3221abb4d 100644
+--- a/drivers/misc/sunxi-addr/sunxi-addr.c
++++ b/drivers/misc/sunxi-addr/sunxi-addr.c
+@@ -211,8 +211,7 @@ static int addr_factory(struct device_node *np,
+ 		memset(cmp_buf, 0x00, ID_LEN);
+ 		if (memcmp(id, cmp_buf, ID_LEN) == 0)
+ 			return -1;
+-		if (sha256(id, ID_LEN, hash))
+-			return -1;
++		sha256(id, ID_LEN, hash);
+ 		memcpy(mac, &hash[idx * ADDR_VAL_LEN], ADDR_VAL_LEN);
+ 		break;
+ 	case TYPE_RAND:
+-- 
+2.38.3
+

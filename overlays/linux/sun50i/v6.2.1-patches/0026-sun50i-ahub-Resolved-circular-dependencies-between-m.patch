@@ -1,0 +1,203 @@
+From 2a1b218a58c444392a76f1da36b70702cfc60a01 Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Tue, 14 Dec 2021 22:54:30 +0500
+Subject: [PATCH 026/114] sun50i-ahub: Resolved circular dependencies between
+ modules
+
+---
+ sound/soc/sunxi/sun50i-ahub-cpudai.c | 24 +++++++++++++-----------
+ sound/soc/sunxi/sun50i-ahub.c        | 20 +++++++++++++++-----
+ sound/soc/sunxi/sun50i_ahub.h        |  4 +++-
+ 3 files changed, 31 insertions(+), 17 deletions(-)
+
+diff --git a/sound/soc/sunxi/sun50i-ahub-cpudai.c b/sound/soc/sunxi/sun50i-ahub-cpudai.c
+index a1aba67f5396..79f7f4bd8595 100644
+--- a/sound/soc/sunxi/sun50i-ahub-cpudai.c
++++ b/sound/soc/sunxi/sun50i-ahub-cpudai.c
+@@ -40,15 +40,13 @@ static int startup_playback_cnt;
+ static int startup_capture_cnt;
+ static int karaoke_cnt;
+ 
+-int sunxi_ahub_cpudai_init(void)
++static int sunxi_ahub_cpudai_init(void)
+ {
+ 	startup_playback_cnt = 0;
+ 	startup_capture_cnt = 0;
+ 	karaoke_cnt = 0;
+ 	return 0;
+ }
+-EXPORT_SYMBOL_GPL(sunxi_ahub_cpudai_init);
+-
+ 
+ static int sunxi_ahub_i2s_playback_route_enable(
+ 		struct sunxi_ahub_cpudai_priv *sunxi_ahub_cpudai)
+@@ -126,7 +124,7 @@ static int sunxi_ahub_i2s_playback_route_enable(
+ 		break;
+ 	}
+ 	sunxi_ahub_cpudai->karaoke_mode = 0;
+-	
++
+ 	return 0;
+ }
+ 
+@@ -194,11 +192,11 @@ static int sunxi_ahub_i2s_capture_route_enable(
+ 		sunxi_ahub_update_bits(SUNXI_AHUB_GAT,
+ 			(1<<I2S0_GAT), (1<<I2S0_GAT));
+ 		sunxi_ahub_update_bits(SUNXI_AHUB_I2S_CTL(0),
+-			(1<<I2S_CTL_RXEN), (1<<I2S_CTL_RXEN));		
++			(1<<I2S_CTL_RXEN), (1<<I2S_CTL_RXEN));
+ 		sunxi_ahub_update_bits(SUNXI_AHUB_I2S_CTL(0),
+ 				(1 << I2S_CTL_SDI0_EN), ( 1<< I2S_CTL_SDI0_EN));
+ 		/* add the delay to anti pop noise when it start capture */
+-		mdelay(100);		
++		mdelay(100);
+ 	}
+ 
+ 	if (reg_val == (1 << i2s1_cap_bit)) {
+@@ -253,7 +251,7 @@ static int sunxi_ahub_i2s_capture_route_disable(
+ 		SUNXI_AHUB_APBIF_RXFIFO_CONT(sunxi_ahub_cpudai->id));
+ 	if (reg_val == (1<<i2s0_cap_bit)) {
+ 		sunxi_ahub_update_bits(SUNXI_AHUB_I2S_CTL(0),
+-			(1<<I2S_CTL_RXEN), (0<<I2S_CTL_RXEN));		
++			(1<<I2S_CTL_RXEN), (0<<I2S_CTL_RXEN));
+ 		sunxi_ahub_update_bits(SUNXI_AHUB_I2S_CTL(0),
+ 				(1<<I2S_CTL_SDI0_EN), (0<<I2S_CTL_SDI0_EN));
+ 	}
+@@ -276,7 +274,7 @@ static int sunxi_ahub_i2s_capture_route_disable(
+ 		sunxi_ahub_update_bits(SUNXI_AHUB_I2S_CTL(3),
+ 				(1<<I2S_CTL_SDI0_EN), (0<<I2S_CTL_SDI0_EN));
+ 	}
+-	
++
+ 	return 0;
+ }
+ 
+@@ -408,7 +406,7 @@ static struct snd_soc_dai_driver sunxi_ahub_cpudai_dai = {
+ static const struct snd_soc_component_driver sunxi_ahub_cpudai_component = {
+ 	.name		= DRV_NAME,
+ };
+-	
++
+ static const struct of_device_id sunxi_ahub_cpudai_of_match[] = {
+ 	{ .compatible = "allwinner,sunxi-ahub-cpudai", },
+ 	{},
+@@ -416,7 +414,7 @@ static const struct of_device_id sunxi_ahub_cpudai_of_match[] = {
+ 
+ static int  sunxi_ahub_cpudai_dev_probe(struct platform_device *pdev)
+ {
+-	struct resource res;	
++	struct resource res;
+ 
+ 	struct sunxi_ahub_cpudai_priv *sunxi_ahub_cpudai;
+ 	struct device_node *np = pdev->dev.of_node;
+@@ -430,7 +428,7 @@ static int  sunxi_ahub_cpudai_dev_probe(struct platform_device *pdev)
+ 		ret = -ENOMEM;
+ 		goto err_node_put;
+ 	}
+-	
++
+ 	dev_set_drvdata(&pdev->dev, sunxi_ahub_cpudai);
+ 
+ 	ret = of_property_read_u32(np, "id", &temp_val);
+@@ -481,6 +479,8 @@ static int  sunxi_ahub_cpudai_dev_probe(struct platform_device *pdev)
+ 		goto err_unregister_component;
+ 	}
+ 
++	sunxi_ahub_set_cpudai_init(sunxi_ahub_cpudai_init);
++
+ 	return 0;
+ 
+ err_unregister_component:
+@@ -498,6 +498,8 @@ static int __exit sunxi_ahub_cpudai_dev_remove(struct platform_device *pdev)
+ 	struct sunxi_ahub_cpudai_priv *sunxi_ahub_cpudai =
+ 					dev_get_drvdata(&pdev->dev);
+ 
++	sunxi_ahub_set_cpudai_init(NULL);
++
+ 	snd_soc_unregister_component(&pdev->dev);
+ 	devm_kfree(&pdev->dev, sunxi_ahub_cpudai);
+ 
+diff --git a/sound/soc/sunxi/sun50i-ahub.c b/sound/soc/sunxi/sun50i-ahub.c
+index 369f1393696e..a77b4e1ced71 100644
+--- a/sound/soc/sunxi/sun50i-ahub.c
++++ b/sound/soc/sunxi/sun50i-ahub.c
+@@ -486,7 +486,7 @@ static const struct snd_soc_dapm_route sunxi_ahub_codec_dapm_routes[] = {
+ 	{"DAM1Chan0 Src Select", "I2S3_TXDIF", "I2S3 DAC"},
+ 	{"DAM1Chan1 Src Select", "I2S3_TXDIF", "I2S3 DAC"},
+ 	{"DAM1Chan2 Src Select", "I2S3_TXDIF", "I2S3 DAC"},
+-	
++
+ 	/* DAM0 Audio Mixer output route */
+ 	{"APBIF0 Src Select", "DAM0_TXDIF", "DAM0 Mixer"},
+ 	{"APBIF1 Src Select", "DAM0_TXDIF", "DAM0 Mixer"},
+@@ -878,7 +878,7 @@ static struct snd_soc_dai_driver sunxi_ahub_codec_dais[] = {
+ static int sunxi_ahub_codec_probe(struct snd_soc_component *component)
+ {
+ 	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+-	
++
+ 	snd_soc_dapm_new_controls(dapm, sunxi_ahub_codec_dapm_widgets,
+ 					ARRAY_SIZE(sunxi_ahub_codec_dapm_widgets));
+ 	snd_soc_dapm_add_routes(dapm, sunxi_ahub_codec_dapm_routes,
+@@ -900,6 +900,14 @@ static int sunxi_ahub_codec_suspend(struct snd_soc_component *component)
+ 	return 0;
+ }
+ 
++static sunxi_ahub_cpudai_init_func *sunxi_ahub_cpudai_init = NULL;
++
++void sunxi_ahub_set_cpudai_init(sunxi_ahub_cpudai_init_func *init_func)
++{
++	sunxi_ahub_cpudai_init = init_func;
++}
++EXPORT_SYMBOL_GPL(sunxi_ahub_set_cpudai_init);
++
+ static int sunxi_ahub_codec_resume(struct snd_soc_component *component)
+ {
+ 	struct sunxi_ahub_priv *sunxi_ahub = snd_soc_component_get_drvdata(component);
+@@ -914,7 +922,9 @@ static int sunxi_ahub_codec_resume(struct snd_soc_component *component)
+ 	}
+ 
+ 	sunxi_ahub_codec_init(component);
+-	//sunxi_ahub_cpudai_init();
++	if (sunxi_ahub_cpudai_init != NULL) {
++		sunxi_ahub_cpudai_init();
++	}
+ 
+ 	return 0;
+ }
+@@ -939,7 +949,7 @@ static int sunxi_ahub_dev_probe(struct platform_device *pdev)
+ 		dev_err(&pdev->dev, "Failed to get the APB clock\n");
+ 		return PTR_ERR(sunxi_ahub->clk_apb);
+ 	}
+-	
++
+ 	sunxi_ahub->clk_module = devm_clk_get(&pdev->dev, "audio-codec-1x");
+ 	if (IS_ERR(sunxi_ahub->clk_module)) {
+ 		dev_err(&pdev->dev, "Failed to get the codec module clock\n");
+@@ -967,7 +977,7 @@ static int sunxi_ahub_dev_probe(struct platform_device *pdev)
+ 	        dev_err(&pdev->dev, "Failed to enable the ahdio hub clock\n");
+ 	        return -EINVAL;
+ 	}
+-	
++
+ 	sunxi_ahub->rst = devm_reset_control_get_exclusive(&pdev->dev, NULL);
+ 	if (IS_ERR(sunxi_ahub->rst)) {
+ 	        dev_err(&pdev->dev, "Failed to get reset control\n");
+diff --git a/sound/soc/sunxi/sun50i_ahub.h b/sound/soc/sunxi/sun50i_ahub.h
+index eff2891e3519..6896d46b7c77 100644
+--- a/sound/soc/sunxi/sun50i_ahub.h
++++ b/sound/soc/sunxi/sun50i_ahub.h
+@@ -293,7 +293,9 @@ extern struct regmap *sunxi_ahub_regmap_init(struct platform_device *pdev);
+ extern unsigned int sunxi_ahub_read(unsigned int reg);
+ extern int sunxi_ahub_update_bits(unsigned int reg, unsigned int mask,
+ 				unsigned int val);
+-extern int sunxi_ahub_cpudai_init(void);
++
++typedef int sunxi_ahub_cpudai_init_func(void);
++extern void sunxi_ahub_set_cpudai_init(sunxi_ahub_cpudai_init_func *init_func);
+ 
+ /* used for sunxi netlink to auto open others card */
+ //extern void sunxi_netlink_printd(const char *fmt, ...);
+-- 
+2.38.3
+

@@ -1,0 +1,97 @@
+From 5245651cf9615ff3c6bb436410402482075cc10a Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Sun, 13 Feb 2022 14:00:48 +0500
+Subject: [PATCH 035/114] dts: Added ccu USB PHY2 clocks/resets
+
+---
+ .../arm64/boot/dts/allwinner/sun50i-h616.dtsi | 36 ++++++++++++-------
+ 1 file changed, 24 insertions(+), 12 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi b/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
+index 9f09fc75dd34..d3007adb6a7f 100644
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
+@@ -842,9 +842,11 @@ ehci0: usb@5101000 {
+ 			interrupts = <GIC_SPI 26 IRQ_TYPE_LEVEL_HIGH>;
+ 			clocks = <&ccu CLK_BUS_OHCI0>,
+ 				 <&ccu CLK_BUS_EHCI0>,
+-				 <&ccu CLK_USB_OHCI0>;
++				 <&ccu CLK_USB_OHCI0>,
++				 <&ccu CLK_USB_PHY2>;
+ 			resets = <&ccu RST_BUS_OHCI0>,
+-				 <&ccu RST_BUS_EHCI0>;
++				 <&ccu RST_BUS_EHCI0>,
++				 <&ccu RST_USB_PHY2>;
+ 			phys = <&usbphy 0>;
+ 			phy-names = "usb";
+ 			status = "disabled";
+@@ -856,8 +858,10 @@ ohci0: usb@5101400 {
+ 			reg = <0x05101400 0x100>;
+ 			interrupts = <GIC_SPI 27 IRQ_TYPE_LEVEL_HIGH>;
+ 			clocks = <&ccu CLK_BUS_OHCI0>,
+-				 <&ccu CLK_USB_OHCI0>;
+-			resets = <&ccu RST_BUS_OHCI0>;
++				 <&ccu CLK_USB_OHCI0>,
++				 <&ccu CLK_USB_PHY2>;
++			resets = <&ccu RST_BUS_OHCI0>,
++				 <&ccu RST_USB_PHY2>;
+ 			phys = <&usbphy 0>;
+ 			phy-names = "usb";
+ 			status = "disabled";
+@@ -870,9 +874,11 @@ ehci1: usb@5200000 {
+ 			interrupts = <GIC_SPI 28 IRQ_TYPE_LEVEL_HIGH>;
+ 			clocks = <&ccu CLK_BUS_OHCI1>,
+ 				 <&ccu CLK_BUS_EHCI1>,
+-				 <&ccu CLK_USB_OHCI1>;
++				 <&ccu CLK_USB_OHCI1>,
++				 <&ccu CLK_USB_PHY2>;
+ 			resets = <&ccu RST_BUS_OHCI1>,
+-				 <&ccu RST_BUS_EHCI1>;
++				 <&ccu RST_BUS_EHCI1>,
++				 <&ccu RST_USB_PHY2>;
+ 			phys = <&usbphy 1>;
+ 			phy-names = "usb";
+ 			status = "disabled";
+@@ -884,8 +890,10 @@ ohci1: usb@5200400 {
+ 			reg = <0x05200400 0x100>;
+ 			interrupts = <GIC_SPI 29 IRQ_TYPE_LEVEL_HIGH>;
+ 			clocks = <&ccu CLK_BUS_OHCI1>,
+-				 <&ccu CLK_USB_OHCI1>;
+-			resets = <&ccu RST_BUS_OHCI1>;
++				 <&ccu CLK_USB_OHCI1>,
++				 <&ccu CLK_USB_PHY2>;
++			resets = <&ccu RST_BUS_OHCI1>,
++				 <&ccu RST_USB_PHY2>;
+ 			phys = <&usbphy 1>;
+ 			phy-names = "usb";
+ 			status = "disabled";
+@@ -926,9 +934,11 @@ ehci3: usb@5311000 {
+ 			interrupts = <GIC_SPI 32 IRQ_TYPE_LEVEL_HIGH>;
+ 			clocks = <&ccu CLK_BUS_OHCI3>,
+ 				 <&ccu CLK_BUS_EHCI3>,
+-				 <&ccu CLK_USB_OHCI3>;
++				 <&ccu CLK_USB_OHCI3>,
++				 <&ccu CLK_USB_PHY2>;
+ 			resets = <&ccu RST_BUS_OHCI3>,
+-				 <&ccu RST_BUS_EHCI3>;
++				 <&ccu RST_BUS_EHCI3>,
++				 <&ccu RST_USB_PHY2>;
+ 			phys = <&usbphy 3>;
+ 			phy-names = "usb";
+ 			status = "disabled";
+@@ -940,8 +950,10 @@ ohci3: usb@5311400 {
+ 			reg = <0x05311400 0x100>;
+ 			interrupts = <GIC_SPI 33 IRQ_TYPE_LEVEL_HIGH>;
+ 			clocks = <&ccu CLK_BUS_OHCI3>,
+-				 <&ccu CLK_USB_OHCI3>;
+-			resets = <&ccu RST_BUS_OHCI3>;
++				 <&ccu CLK_USB_OHCI3>,
++				 <&ccu CLK_USB_PHY2>;
++			resets = <&ccu RST_BUS_OHCI3>,
++				 <&ccu RST_USB_PHY2>;
+ 			phys = <&usbphy 3>;
+ 			phy-names = "usb";
+ 			status = "disabled";
+-- 
+2.38.3
+

@@ -1,0 +1,39 @@
+From 3646c05c76fd44ff190d9f22bd535cc71d07d54e Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Sat, 26 Mar 2022 16:28:21 +0500
+Subject: [PATCH 043/114] uwe5622: Port to Linux 5.17.y
+
+---
+ drivers/net/wireless/uwe5622/tty-sdio/lpm.c                  | 2 +-
+ drivers/net/wireless/uwe5622/unisocwcn/platform/wcn_procfs.c | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/net/wireless/uwe5622/tty-sdio/lpm.c b/drivers/net/wireless/uwe5622/tty-sdio/lpm.c
+index b2d9a8994e5e..35e30651a921 100644
+--- a/drivers/net/wireless/uwe5622/tty-sdio/lpm.c
++++ b/drivers/net/wireless/uwe5622/tty-sdio/lpm.c
+@@ -70,7 +70,7 @@ static int btwrite_proc_show(struct seq_file *m, void *v)
+ 
+ static int bluesleep_open_proc_btwrite(struct inode *inode, struct file *file)
+ {
+-	return single_open(file, btwrite_proc_show, PDE_DATA(inode));
++	return single_open(file, btwrite_proc_show, pde_data(inode));
+ }
+ 
+ static const struct proc_ops lpm_proc_btwrite_fops = {
+diff --git a/drivers/net/wireless/uwe5622/unisocwcn/platform/wcn_procfs.c b/drivers/net/wireless/uwe5622/unisocwcn/platform/wcn_procfs.c
+index 06e632675946..8d16d6966d33 100644
+--- a/drivers/net/wireless/uwe5622/unisocwcn/platform/wcn_procfs.c
++++ b/drivers/net/wireless/uwe5622/unisocwcn/platform/wcn_procfs.c
+@@ -431,7 +431,7 @@ static const struct proc_ops mdbg_snap_shoot_seq_fops = {
+ static int mdbg_proc_open(struct inode *inode, struct file *filp)
+ {
+ 	struct mdbg_proc_entry *entry =
+-		(struct mdbg_proc_entry *)PDE_DATA(inode);
++		(struct mdbg_proc_entry *)pde_data(inode);
+ 	filp->private_data = entry;
+ 
+ 	return 0;
+-- 
+2.38.3
+

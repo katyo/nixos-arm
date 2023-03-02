@@ -1,0 +1,275 @@
+From 299ff6ed9581b8ceb8d183b64b383cef696918d2 Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Sun, 16 Oct 2022 00:01:23 +0500
+Subject: [PATCH 092/114] H616: Update enhanced PWM driver to avoid using
+ legacy API
+
+---
+ drivers/pwm/pwm-sunxi-enhance.c | 182 ++++++++++++++++++++++++--------
+ 1 file changed, 138 insertions(+), 44 deletions(-)
+
+diff --git a/drivers/pwm/pwm-sunxi-enhance.c b/drivers/pwm/pwm-sunxi-enhance.c
+index 8f223e167878..0c9d36cdd47e 100644
+--- a/drivers/pwm/pwm-sunxi-enhance.c
++++ b/drivers/pwm/pwm-sunxi-enhance.c
+@@ -147,66 +147,58 @@ static int sunxi_pwm_get_config(struct platform_device *pdev, struct sunxi_pwm_c
+ 	return ret;
+ }
+ 
+-static int sunxi_pwm_set_polarity_single(struct pwm_chip *chip, struct pwm_device *pwm, enum pwm_polarity polarity)
++static int sunxi_pwm_set_polarity_single(struct pwm_chip *chip,
++																				 struct pwm_device *pwm,
++																				 enum pwm_polarity polarity)
+ {
+ 	u32 temp;
+-	unsigned int reg_offset, reg_shift, reg_width;
+-	u32 sel = 0;
++	unsigned reg_offset;
++
++	reg_offset = PWM_PCR_BASE + (pwm->pwm - chip->base) * 0x20;
+ 
+-	sel = pwm->pwm - chip->base;
+-	reg_offset = PWM_PCR_BASE + sel * 0x20;
+-	reg_shift = PWM_ACT_STA_SHIFT;
+-	reg_width = PWM_ACT_STA_WIDTH;
+ 	temp = sunxi_pwm_readl(chip, reg_offset);
+-	if (polarity == PWM_POLARITY_NORMAL)
+-		temp = SET_BITS(reg_shift, 1, temp, 1);
+-	else
+-		temp = SET_BITS(reg_shift, 1, temp, 0);
++
++	temp = SET_BITS(PWM_ACT_STA_SHIFT, PWM_ACT_STA_WIDTH, temp,
++									polarity == PWM_POLARITY_NORMAL ? 1 : 0);
+ 
+ 	sunxi_pwm_writel(chip, reg_offset, temp);
+ 
+ 	return 0;
+ }
+ 
+-static int sunxi_pwm_set_polarity_dual(struct pwm_chip *chip, struct pwm_device *pwm, enum pwm_polarity polarity, int bind_num)
++static int sunxi_pwm_set_polarity_dual(struct pwm_chip *chip,
++																			 struct pwm_device *pwm,
++																			 enum pwm_polarity polarity,
++																			 int bind_num)
+ {
+ 	u32 temp[2];
+-	unsigned int reg_offset[2], reg_shift[2], reg_width[2];
+-	u32 sel[2] = {0};
++	unsigned reg_offset[2];
+ 
+-	sel[0] = pwm->pwm - chip->base;
+-	sel[1] = bind_num - chip->base;
+ 	/* config current pwm*/
+-	reg_offset[0] = PWM_PCR_BASE + sel[0] * 0x20;
+-	reg_shift[0] = PWM_ACT_STA_SHIFT;
+-	reg_width[0] = PWM_ACT_STA_WIDTH;
+-	temp[0] = sunxi_pwm_readl(chip, reg_offset[0]);
+-	if (polarity == PWM_POLARITY_NORMAL)
+-		temp[0] = SET_BITS(reg_shift[0], 1, temp[0], 1);
+-	else
+-		temp[0] = SET_BITS(reg_shift[0], 1, temp[0], 0);
+-
++	reg_offset[0] = PWM_PCR_BASE + (pwm->pwm - chip->base) * 0x20;
+ 	/* config bind pwm*/
+-	reg_offset[1] = PWM_PCR_BASE + sel[1] * 0x20;
+-	reg_shift[1] = PWM_ACT_STA_SHIFT;
+-	reg_width[1] = PWM_ACT_STA_WIDTH;
++	reg_offset[1] = PWM_PCR_BASE + (bind_num - chip->base) * 0x20;
++
++	temp[0] = sunxi_pwm_readl(chip, reg_offset[0]);
+ 	temp[1] = sunxi_pwm_readl(chip, reg_offset[1]);
+ 
++	temp[0] = SET_BITS(PWM_ACT_STA_SHIFT, PWM_ACT_STA_WIDTH, temp[0],
++										 polarity == PWM_POLARITY_NORMAL ? 1 : 0);
++
+ 	/*bind pwm's polarity is reverse compare with the  current pwm*/
+-	if (polarity == PWM_POLARITY_NORMAL)
+-		temp[1] = SET_BITS(reg_shift[0], 1, temp[1], 0);
+-	else
+-		temp[1] = SET_BITS(reg_shift[0], 1, temp[1], 1);
++	temp[1] = SET_BITS(PWM_ACT_STA_SHIFT, PWM_ACT_STA_WIDTH, temp[1],
++										 polarity == PWM_POLARITY_NORMAL ? 0 : 1);
+ 
+ 	/*config register at the same time*/
+ 	sunxi_pwm_writel(chip, reg_offset[0], temp[0]);
+ 	sunxi_pwm_writel(chip, reg_offset[1], temp[1]);
+ 
+ 	return 0;
+-
+ }
+ 
+-static int sunxi_pwm_set_polarity(struct pwm_chip *chip, struct pwm_device *pwm, enum pwm_polarity polarity)
++static int sunxi_pwm_set_polarity(struct pwm_chip *chip,
++																	struct pwm_device *pwm,
++																	enum pwm_polarity polarity)
+ {
+ 	int bind_num;
+ 	struct sunxi_pwm_chip *pc = to_sunxi_pwm_chip(chip);
+@@ -220,6 +212,23 @@ static int sunxi_pwm_set_polarity(struct pwm_chip *chip, struct pwm_device *pwm,
+ 	return 0;
+ }
+ 
++static int sunxi_pwm_get_polarity(struct pwm_chip *chip,
++																	struct pwm_device *pwm,
++																	enum pwm_polarity *polarity)
++{
++	u32 temp;
++	unsigned reg_offset;
++
++	reg_offset = PWM_PCR_BASE + (pwm->pwm - chip->base) * 0x20;
++
++	temp = sunxi_pwm_readl(chip, reg_offset);
++
++	*polarity = GET_BITS(PWM_ACT_STA_SHIFT, PWM_ACT_STA_WIDTH, temp) ?
++			    PWM_POLARITY_NORMAL :
++			    PWM_POLARITY_INVERSED;
++
++	return 0;
++}
+ 
+ static u32 get_pccr_reg_offset(u32 sel, u32 *reg_offset)
+ {
+@@ -290,8 +299,7 @@ static int sunxi_pwm_config_single(struct pwm_chip *chip, struct pwm_device *pwm
+ 	unsigned int reg_div_m_shift, reg_div_m_width;
+ 	unsigned int pre_scal_id = 0, div_m = 0, prescale = 0;
+ 	u32 sel = 0;
+-	u32 pre_scal[][2] = {
+-
++	static const u32 pre_scal[][2] = {
+ 		/* reg_value  clk_pre_div */
+ 		{0, 1},
+ 		{1, 2},
+@@ -354,8 +362,8 @@ static int sunxi_pwm_config_single(struct pwm_chip *chip, struct pwm_device *pwm
+ 	for (pre_scal_id = 0; pre_scal_id < 9; pre_scal_id++) {
+ 		if (entire_cycles <= 65536)
+ 				break;
+-		for (prescale = 0; prescale < PRESCALE_MAX+1; prescale++) {
+-			entire_cycles = ((unsigned long)c/pre_scal[pre_scal_id][1])/(prescale + 1);
++		for (prescale = 0; prescale < PRESCALE_MAX + 1; prescale++) {
++			entire_cycles = ((unsigned long)c / pre_scal[pre_scal_id][1]) / (prescale + 1);
+ 			if (entire_cycles <= 65536) {
+ 				div_m = pre_scal[pre_scal_id][0];
+ 				break;
+@@ -420,8 +428,7 @@ static int sunxi_pwm_config_dual(struct pwm_chip *chip, struct pwm_device *pwm,
+ 	int src_clk_sel = 0;
+ 	int i = 0;
+ 	unsigned int dead_time = 0, duty = 0;
+-	u32 pre_scal[][2] = {
+-
++	static const u32 pre_scal[][2] = {
+ 		/* reg_value  clk_pre_div */
+ 		{0, 1},
+ 		{1, 2},
+@@ -646,6 +653,19 @@ static int sunxi_pwm_enable_single(struct pwm_chip *chip, struct pwm_device *pwm
+ 	return 0;
+ }
+ 
++static bool sunxi_pwm_enabled(struct pwm_chip *chip, struct pwm_device *pwm) {
++	unsigned int value, index;
++	unsigned int reg_offset, reg_shift;
++
++	index = pwm->pwm - chip->base;
++
++	reg_offset = PWM_PER;
++	reg_shift = index;
++	value = sunxi_pwm_readl(chip, reg_offset);
++
++	return GET_BITS(reg_shift, 0x1, value) ? true : false;
++}
++
+ static int sunxi_pwm_enable_dual(struct pwm_chip *chip, struct pwm_device *pwm, int bind_num)
+ {
+ 	u32 value[2] = {0};
+@@ -857,11 +877,85 @@ static void sunxi_pwm_disable(struct pwm_chip *chip, struct pwm_device *pwm)
+ 		sunxi_pwm_disable_dual(chip, pwm, bind_num);
+ }
+ 
++static int sunxi_pwm_apply(struct pwm_chip *chip, struct pwm_device *pwm,
++													 const struct pwm_state *state)
++{
++	int err;
++	struct pwm_state initial_state = pwm->state;
++
++	if (state->polarity != pwm->state.polarity) {
++		/*
++		 * Changing the polarity of a running PWM is only allowed when
++		 * the PWM driver implements ->apply().
++		 */
++		if (pwm->state.enabled) {
++			sunxi_pwm_disable(chip, pwm);
++
++			/*
++			 * Update pwm->state already here in case
++			 * .set_polarity() or another callback depend on that.
++			 */
++			pwm->state.enabled = false;
++		}
++
++		err = sunxi_pwm_set_polarity(chip, pwm, state->polarity);
++		if (err)
++			goto rollback;
++
++		pwm->state.polarity = state->polarity;
++	}
++
++	if (!state->enabled) {
++		if (pwm->state.enabled)
++			sunxi_pwm_disable(chip, pwm);
++
++		return 0;
++	}
++
++	/*
++	 * We cannot skip calling ->config even if state->period ==
++	 * pwm->state.period && state->duty_cycle == pwm->state.duty_cycle
++	 * because we might have exited early in the last call to
++	 * pwm_apply_state because of !state->enabled and so the two values in
++	 * pwm->state might not be configured in hardware.
++	 */
++	err = sunxi_pwm_config(pwm->chip, pwm,
++												 state->duty_cycle,
++												 state->period);
++	if (err)
++		goto rollback;
++
++	pwm->state.period = state->period;
++	pwm->state.duty_cycle = state->duty_cycle;
++
++	if (!pwm->state.enabled) {
++		err = sunxi_pwm_enable(chip, pwm);
++		if (err)
++			goto rollback;
++	}
++
++	return 0;
++
++rollback:
++	pwm->state = initial_state;
++	return err;
++}
++
++static void sunxi_pwm_get_state(struct pwm_chip *chip, struct pwm_device *pwm,
++				struct pwm_state *state)
++{
++	struct sunxi_pwm_chip *pc = to_sunxi_pwm_chip(chip);
++
++	// TODO: Also we need get initial period, duty_cycle
++	state->period = 0;
++	state->duty_cycle = 0;
++	sunxi_pwm_get_polarity(chip, pwm, &state->polarity);
++	state->enabled = sunxi_pwm_enabled(chip, pwm);
++}
++
+ static struct pwm_ops sunxi_pwm_ops = {
+-	.config = sunxi_pwm_config,
+-	.enable = sunxi_pwm_enable,
+-	.disable = sunxi_pwm_disable,
+-	.set_polarity = sunxi_pwm_set_polarity,
++	.apply = sunxi_pwm_apply,
++	.get_state = sunxi_pwm_get_state,
+ 	.owner = THIS_MODULE,
+ };
+ 
+-- 
+2.38.3
+

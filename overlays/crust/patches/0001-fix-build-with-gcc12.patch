@@ -1,0 +1,29 @@
+From 9c5a56c4c162dd18c3db71e770982860f850e5d3 Mon Sep 17 00:00:00 2001
+From: Kayo Phoenix <kayo@illumium.org>
+Date: Sat, 29 Oct 2022 21:30:58 +0500
+Subject: [PATCH] Fix build using GCC 12.x
+
+I have linking error like the following:
+```
+|   LD      .../crust/2022.09.13-r0/build/scp/scp.elf
+| .../crust/2022.09.13-r0/recipe-sysroot-native/usr/bin/../lib/gcc/or1k-none-elf/12.2.0/../../../../or1k-none-elf/bin/ld: warning: .../crust/2022.09.13-r0/build/scp/scp.elf has a LOAD segment with RWX permissions
+| collect2: error: ld returned 1 exit status
+| make: *** [Makefile:197: .../crust/2022.09.13-r0/build/scp/scp.elf] Error 1
+| make: Leaving directory '.../crust/2022.09.13-r0/git'
+```
+---
+ Makefile | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Makefile b/Makefile
+index 2f6b707a..d41838c3 100644
+--- a/Makefile
++++ b/Makefile
+@@ -80,6 +80,7 @@ LDFLAGS		 = -nostdlib \
+ 		   -static \
+ 		   -Wl,-O1 \
+ 		   -Wl,--build-id=none \
++		   -Wl,--no-warn-rwx-segments \
+ 		   -Wl,--fatal-warnings \
+ 		   -Wl,--gc-sections \
+ 		   -Wl,--no-dynamic-linker \

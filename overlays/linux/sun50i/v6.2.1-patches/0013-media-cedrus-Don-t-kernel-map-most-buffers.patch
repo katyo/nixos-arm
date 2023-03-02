@@ -1,0 +1,33 @@
+From 6675636bcc23d12d6592f6f6387031e212deef7c Mon Sep 17 00:00:00 2001
+From: Jernej Skrabec <jernej.skrabec@gmail.com>
+Date: Sun, 12 Sep 2021 07:46:51 +0200
+Subject: [PATCH 013/114] media: cedrus: Don't kernel map most buffers
+
+Except VP8 probability coefficients buffer, all other buffers are never
+accessed by CPU. That allows us to mark them with DMA_ATTR_NO_KERNEL_MAPPING
+flag. This helps with decoding big (like 4k) videos on 32-bit ARM
+platforms where default vmalloc size is relatively small - 240 MiB.
+Since auxiliary buffer are not yet efficiently allocated, this can be
+easily exceeded. Even if allocation is optimized, 4k videos will still
+often exceed this limit.
+
+Signed-off-by: Jernej Skrabec <jernej.skrabec@gmail.com>
+---
+ drivers/staging/media/sunxi/cedrus/cedrus_video.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/staging/media/sunxi/cedrus/cedrus_video.c b/drivers/staging/media/sunxi/cedrus/cedrus_video.c
+index b00feaf4072c..45e53534ec6c 100644
+--- a/drivers/staging/media/sunxi/cedrus/cedrus_video.c
++++ b/drivers/staging/media/sunxi/cedrus/cedrus_video.c
+@@ -598,6 +598,7 @@ int cedrus_queue_init(void *priv, struct vb2_queue *src_vq,
+ 
+ 	dst_vq->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+ 	dst_vq->io_modes = VB2_MMAP | VB2_DMABUF;
++	src_vq->dma_attrs = DMA_ATTR_NO_KERNEL_MAPPING;
+ 	dst_vq->drv_priv = ctx;
+ 	dst_vq->buf_struct_size = sizeof(struct cedrus_buffer);
+ 	dst_vq->ops = &cedrus_qops;
+-- 
+2.38.3
+

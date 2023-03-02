@@ -1,0 +1,350 @@
+From 1a27d74930df83f1819faab3ac8143a7676eefe6 Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Tue, 23 Aug 2022 09:51:10 +0500
+Subject: [PATCH 089/114] uwe5622: Port to linux 5.19.y
+
+---
+ .../allwinner/sun50i-h6-orangepi-3-lts.dts    |  2 +-
+ arch/arm64/boot/dts/allwinner/sun50i-h6.dtsi  |  4 +-
+ .../allwinner/sun50i-h616-orangepi-zero2.dts  | 51 +++++++++++----
+ .../arm64/boot/dts/allwinner/sun50i-h616.dtsi | 65 ++++++++++++++++++-
+ .../wireless/uwe5622/unisocwifi/cfg80211.c    |  3 +-
+ .../net/wireless/uwe5622/unisocwifi/cmdevt.c  |  2 +-
+ 6 files changed, 107 insertions(+), 20 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h6-orangepi-3-lts.dts b/arch/arm64/boot/dts/allwinner/sun50i-h6-orangepi-3-lts.dts
+index eb78b3bb06be..9863ca56c3db 100644
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h6-orangepi-3-lts.dts
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h6-orangepi-3-lts.dts
+@@ -276,7 +276,7 @@ reg_bldo2: bldo2 {
+ 				regulator-name = "vcc-efuse-pcie-hdmi-pc";
+ 			};
+ 
+-			reg_blod3: bldo3 {
++			reg_bldo3: bldo3 {
+ 				regulator-always-on;
+ 				regulator-min-microvolt = <1800000>;
+ 				regulator-max-microvolt = <1800000>;
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h6.dtsi b/arch/arm64/boot/dts/allwinner/sun50i-h6.dtsi
+index 6f500b14422c..5ef00b8f59fc 100644
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h6.dtsi
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h6.dtsi
+@@ -1252,8 +1252,8 @@ sunxi-info {
+ 			status = "okay";
+ 		};
+ 
+-		addr_mgt: addr-mgt {
+-			compatible = "allwinner,sunxi-addr_mgt";
++		addr_mgmt: addr-mgmt {
++			compatible = "allwinner,sunxi-addr-mgmt";
+ 			type_addr_wifi = <0x2>;
+ 			type_addr_bt = <0x2>;
+ 			type_addr_eth = <0x2>;
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts b/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts
+index 99e0cb9cffb1..e736941c73bd 100644
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts
+@@ -44,13 +44,13 @@ led-0 {
+ 			function = LED_FUNCTION_POWER;
+ 			color = <LED_COLOR_ID_RED>;
+ 			gpios = <&pio 2 12 GPIO_ACTIVE_HIGH>; /* PC12 */
+-			default-state = "on";
+ 		};
+ 
+ 		led-1 {
+ 			function = LED_FUNCTION_STATUS;
+ 			color = <LED_COLOR_ID_GREEN>;
+ 			gpios = <&pio 2 13 GPIO_ACTIVE_HIGH>; /* PC13 */
++			default-state = "on";
+ 		};
+ 	};
+ 
+@@ -106,6 +106,10 @@ &de {
+ 	status = "okay";
+ };
+ 
++&ehci0 {
++	status = "okay";
++};
++
+ &ehci1 {
+ 	status = "okay";
+ };
+@@ -181,6 +185,10 @@ uwe-bsp {
+ 	};
+ };
+ 
++&ohci0 {
++	status = "okay";
++};
++
+ &ohci1 {
+ 	status = "okay";
+ };
+@@ -313,10 +321,10 @@ &pio {
+ };
+ 
+ &cpu0 {
+-        cpu-supply = <&reg_dcdca>;
++	cpu-supply = <&reg_dcdca>;
+ };
+ 
+-&spi0  {
++&spi0 {
+ 	status = "okay";
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&spi0_pins>, <&spi0_cs0_pin>;
+@@ -336,10 +344,16 @@ &uart0 {
+ 	status = "okay";
+ };
+ 
++&uart2 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&uart2_ph_pins>;
++	status = "disabled";
++};
++
+ &uart5 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&uart5_ph_pins>;
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &usbotg {
+@@ -363,10 +377,20 @@ &usbphy {
+ 	status = "okay";
+ };
+ 
++&i2c1 {
++	status = "disabled";
++};
++
++&i2c2 {
++	status = "disabled";
++};
++
+ &i2c3 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&i2c3_ph_pins>;
+-	status = "okay";
++	status = "disabled";
++};
++
++&i2c4 {
++	status = "disabled";
+ };
+ 
+ &ir {
+@@ -378,20 +402,19 @@ &ir {
+ &spi1 {
+ 	#address-cells = <1>;
+ 	#size-cells = <0>;
+-	status = "okay";
++	status = "disabled";
+ 
+ 	spidev@1 {
+-		compatible = "spidev";
+-		status = "okay";
+-		reg = <0>;
++		compatible = "rohm,dh2228fv";
++		status = "disabled";
++		reg = <1>;
+ 		spi-max-frequency = <1000000>;
+ 	};
+ };
+ 
+ &codec {
+-        allwinner,audio-routing =
+-                "Line Out", "LINEOUT";
+-        status = "okay";
++	allwinner,audio-routing = "Line Out", "LINEOUT";
++	status = "okay";
+ };
+ 
+ &ahub_codec {
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi b/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
+index e0d1fc86547e..9bb4d0508da7 100644
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
+@@ -208,6 +208,19 @@ syscon: syscon@3000000 {
+ 			#size-cells = <1>;
+ 			ranges;
+ 
++			sram_a2: sram@100000 {
++				compatible = "mmio-sram";
++				reg = <0x00100000 0x18000>;
++				#address-cells = <1>;
++				#size-cells = <1>;
++				ranges = <0 0x00100000 0x18000>;
++
++				scpi_sram: scpi-sram@17c00 {
++					compatible = "arm,scp-shmem";
++					reg = <0x17c00 0x200>;
++				};
++			};
++
+ 			sram_c: sram@28000 {
+ 				compatible = "mmio-sram";
+ 				reg = <0x00028000 0x30000>;
+@@ -333,6 +346,7 @@ pio: pinctrl@300b000 {
+ 			interrupt-controller;
+ 			#interrupt-cells = <3>;
+ 
++			/omit-if-no-ref/
+ 			ext_rgmii_pins: rgmii-pins {
+ 				pins = "PI0", "PI1", "PI2", "PI3", "PI4",
+ 				       "PI5", "PI7", "PI8", "PI9", "PI10",
+@@ -342,16 +356,36 @@ ext_rgmii_pins: rgmii-pins {
+ 				drive-strength = <40>;
+ 			};
+ 
++			/omit-if-no-ref/
+ 			i2c0_pins: i2c0-pins {
+ 				pins = "PI6", "PI7";
+ 				function = "i2c0";
+ 			};
+ 
+-			i2c3_ph_pins: i2c3-ph-pins {
++			/omit-if-no-ref/
++			i2c1_pins: i2c1-pins {
++				pins = "PH0", "PH1";
++				function = "i2c1";
++			};
++
++			/omit-if-no-ref/
++			i2c2_pins: i2c2-pins {
++				pins = "PH2", "PH3";
++				function = "i2c2";
++			};
++
++			/omit-if-no-ref/
++			i2c3_pins: i2c3-pins {
+ 				pins = "PH4", "PH5";
+ 				function = "i2c3";
+ 			};
+ 
++			/omit-if-no-ref/
++			i2c4_pins: i2c4-pins {
++				pins = "PH6", "PH7";
++				function = "i2c4";
++			};
++
+ 			/omit-if-no-ref/
+ 			i2s3_pins: i2s3-pins {
+ 				pins = "PH5", "PH6", "PH7", "PH8", "PH9";
+@@ -445,6 +479,12 @@ spi1_cs0_pin: spi1-cs0-pin {
+ 				function = "spi1";
+ 			};
+ 
++			/omit-if-no-ref/
++			spi1_cs1_pin: spi1-cs1-pin {
++				pins = "PH9";
++				function = "spi1";
++			};
++
+ 			uart0_ph_pins: uart0-ph-pins {
+ 				pins = "PH0", "PH1";
+ 				function = "uart0";
+@@ -462,6 +502,18 @@ uart1_rts_cts_pins: uart1-rts-cts-pins {
+ 				function = "uart1";
+ 			};
+ 
++			/omit-if-no-ref/
++			uart2_ph_pins: uart2-ph-pins {
++				pins = "PH5", "PH6";
++				function = "uart2";
++			};
++
++			/omit-if-no-ref/
++			uart2_rts_cts_pins: uart2-rts-cts-pins {
++				pins = "PH7", "PH8";
++				function = "uart2";
++			};
++
+ 			/omit-if-no-ref/
+ 			uart5_ph_pins: uart5-ph-pins {
+ 				pins = "PH2", "PH3";
+@@ -756,6 +808,8 @@ i2c1: i2c@5002400 {
+ 			interrupts = <GIC_SPI 7 IRQ_TYPE_LEVEL_HIGH>;
+ 			clocks = <&ccu CLK_BUS_I2C1>;
+ 			resets = <&ccu RST_BUS_I2C1>;
++			pinctrl-names = "default";
++			pinctrl-0 = <&i2c1_pins>;
+ 			status = "disabled";
+ 			#address-cells = <1>;
+ 			#size-cells = <0>;
+@@ -769,6 +823,8 @@ i2c2: i2c@5002800 {
+ 			interrupts = <GIC_SPI 8 IRQ_TYPE_LEVEL_HIGH>;
+ 			clocks = <&ccu CLK_BUS_I2C2>;
+ 			resets = <&ccu RST_BUS_I2C2>;
++			pinctrl-names = "default";
++			pinctrl-0 = <&i2c2_pins>;
+ 			status = "disabled";
+ 			#address-cells = <1>;
+ 			#size-cells = <0>;
+@@ -782,6 +838,8 @@ i2c3: i2c@5002c00 {
+ 			interrupts = <GIC_SPI 9 IRQ_TYPE_LEVEL_HIGH>;
+ 			clocks = <&ccu CLK_BUS_I2C3>;
+ 			resets = <&ccu RST_BUS_I2C3>;
++			pinctrl-names = "default";
++			pinctrl-0 = <&i2c3_pins>;
+ 			status = "disabled";
+ 			#address-cells = <1>;
+ 			#size-cells = <0>;
+@@ -795,6 +853,8 @@ i2c4: i2c@5003000 {
+ 			interrupts = <GIC_SPI 10 IRQ_TYPE_LEVEL_HIGH>;
+ 			clocks = <&ccu CLK_BUS_I2C4>;
+ 			resets = <&ccu RST_BUS_I2C4>;
++			pinctrl-names = "default";
++			pinctrl-0 = <&i2c4_pins>;
+ 			status = "disabled";
+ 			#address-cells = <1>;
+ 			#size-cells = <0>;
+@@ -1053,6 +1113,7 @@ rtc: rtc@7000000 {
+ 		};
+ 
+ 		hdmi: hdmi@6000000 {
++			#sound-dai-cells = <0>;
+ 			compatible = "allwinner,sun50i-h616-dw-hdmi",
+ 				     "allwinner,sun50i-h6-dw-hdmi";
+ 			reg = <0x06000000 0x10000>;
+@@ -1252,6 +1313,8 @@ r_i2c: i2c@7081400 {
+ 			interrupts = <GIC_SPI 105 IRQ_TYPE_LEVEL_HIGH>;
+ 			clocks = <&r_ccu CLK_R_APB2_I2C>;
+ 			resets = <&r_ccu RST_R_APB2_I2C>;
++			pinctrl-names = "default";
++			pinctrl-0 = <&r_i2c_pins>;
+ 			status = "disabled";
+ 			#address-cells = <1>;
+ 			#size-cells = <0>;
+diff --git a/drivers/net/wireless/uwe5622/unisocwifi/cfg80211.c b/drivers/net/wireless/uwe5622/unisocwifi/cfg80211.c
+index 75bfa37afdcd..c1f52f55733f 100644
+--- a/drivers/net/wireless/uwe5622/unisocwifi/cfg80211.c
++++ b/drivers/net/wireless/uwe5622/unisocwifi/cfg80211.c
+@@ -984,7 +984,8 @@ static int sprdwl_cfg80211_change_beacon(struct wiphy *wiphy,
+ 	return sprdwl_change_beacon(vif, beacon);
+ }
+ 
+-static int sprdwl_cfg80211_stop_ap(struct wiphy *wiphy, struct net_device *ndev)
++static int sprdwl_cfg80211_stop_ap(struct wiphy *wiphy, struct net_device *ndev,
++																	 unsigned int link_id)
+ {
+ #ifdef DFS_MASTER
+ 	struct sprdwl_vif *vif = netdev_priv(ndev);
+diff --git a/drivers/net/wireless/uwe5622/unisocwifi/cmdevt.c b/drivers/net/wireless/uwe5622/unisocwifi/cmdevt.c
+index ca5d074b9ed1..f9dc2f65d917 100644
+--- a/drivers/net/wireless/uwe5622/unisocwifi/cmdevt.c
++++ b/drivers/net/wireless/uwe5622/unisocwifi/cmdevt.c
+@@ -3426,7 +3426,7 @@ void sprdwl_event_chan_changed(struct sprdwl_vif *vif, u8 *data, u16 len)
+ 						NL80211_CHAN_HT20);
+ 		else
+ 			wl_err("%s, ch is null!\n", __func__);
+-		cfg80211_ch_switch_notify(vif->ndev, &chandef);
++		cfg80211_ch_switch_notify(vif->ndev, &chandef, 0);
+ 	}
+ }
+ 
+-- 
+2.38.3
+

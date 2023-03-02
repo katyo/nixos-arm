@@ -1,0 +1,25 @@
+From 6a4bce28bff4e2ee60992e945f2ad858e3ab114b Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Sun, 16 Oct 2022 00:23:35 +0500
+Subject: [PATCH 094/114] uwe5622: Port to linux-6.0.y
+
+---
+ drivers/net/wireless/uwe5622/unisocwifi/cfg80211.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/uwe5622/unisocwifi/cfg80211.c b/drivers/net/wireless/uwe5622/unisocwifi/cfg80211.c
+index c1f52f55733f..a2a2de1dad56 100644
+--- a/drivers/net/wireless/uwe5622/unisocwifi/cfg80211.c
++++ b/drivers/net/wireless/uwe5622/unisocwifi/cfg80211.c
+@@ -2394,7 +2394,7 @@ void sprdwl_report_connection(struct sprdwl_vif *vif,
+ 		 conn_info->status == SPRDWL_ROAM_SUCCESS){
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
+ 		struct cfg80211_roam_info roam_info = {
+-			.bss = bss,
++			.links[0].bss = bss,
+ 			.req_ie = conn_info->req_ie,
+ 			.req_ie_len = conn_info->req_ie_len,
+ 			.resp_ie = conn_info->resp_ie,
+-- 
+2.38.3
+

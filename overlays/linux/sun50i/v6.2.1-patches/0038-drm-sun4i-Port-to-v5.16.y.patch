@@ -1,0 +1,36 @@
+From 834f3cbf4754e48eb4db375c653469a28021d280 Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Sun, 13 Feb 2022 21:44:59 +0500
+Subject: [PATCH 038/114] drm: sun4i: Port to v5.16.y
+
+---
+ drivers/gpu/drm/sun4i/sun8i_mixer.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/gpu/drm/sun4i/sun8i_mixer.c b/drivers/gpu/drm/sun4i/sun8i_mixer.c
+index d9191f014d37..b5a0b7ed685d 100644
+--- a/drivers/gpu/drm/sun4i/sun8i_mixer.c
++++ b/drivers/gpu/drm/sun4i/sun8i_mixer.c
+@@ -518,8 +518,7 @@ static int sun8i_mixer_bind(struct device *dev, struct device *master,
+ 	}
+ 
+ 	if (mixer->cfg->de_type == sun8i_mixer_de33) {
+-		res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+-		regs = devm_ioremap_resource(dev, res);
++		regs = devm_platform_get_and_ioremap_resource(pdev, 1, NULL);
+ 		if (IS_ERR(regs))
+ 			return PTR_ERR(regs);
+ 
+@@ -530,8 +529,7 @@ static int sun8i_mixer_bind(struct device *dev, struct device *master,
+ 			return PTR_ERR(mixer->top_regs);
+ 		}
+ 
+-		res = platform_get_resource(pdev, IORESOURCE_MEM, 2);
+-		regs = devm_ioremap_resource(dev, res);
++		regs = devm_platform_get_and_ioremap_resource(pdev, 2, NULL);
+ 		if (IS_ERR(regs))
+ 			return PTR_ERR(regs);
+ 
+-- 
+2.38.3
+

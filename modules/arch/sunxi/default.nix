@@ -10,6 +10,8 @@
     };
     consoleLogLevel = lib.mkDefault 7;
     kernelParams = [
+      # Needs for debug boot
+      "earlycon"
       # Needs to bind UART console
       "console=ttyS0,115200n8"
     ];

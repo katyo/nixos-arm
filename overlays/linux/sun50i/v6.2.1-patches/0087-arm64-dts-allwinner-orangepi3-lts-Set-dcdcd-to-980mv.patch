@@ -1,0 +1,28 @@
+From bbbf6999d8172d86a9951896d1414e1f7ee22753 Mon Sep 17 00:00:00 2001
+From: orangepi-xunlong <258384131@qq.com>
+Date: Wed, 3 Aug 2022 17:24:54 +0800
+Subject: [PATCH 087/114] arm64: dts: allwinner: orangepi3-lts: Set dcdcd to
+ 980mv
+
+---
+ arch/arm64/boot/dts/allwinner/sun50i-h6-orangepi-3-lts.dts | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h6-orangepi-3-lts.dts b/arch/arm64/boot/dts/allwinner/sun50i-h6-orangepi-3-lts.dts
+index 2bf68f9ee0bd..eb78b3bb06be 100644
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h6-orangepi-3-lts.dts
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h6-orangepi-3-lts.dts
+@@ -320,8 +320,8 @@ reg_dcdcc: dcdcc {
+ 
+ 			reg_dcdcd: dcdcd {
+ 				regulator-always-on;
+-				regulator-min-microvolt = <960000>;
+-				regulator-max-microvolt = <960000>;
++				regulator-min-microvolt = <980000>;
++				regulator-max-microvolt = <980000>;
+ 				regulator-name = "vdd-sys";
+ 			};
+ 
+-- 
+2.38.3
+

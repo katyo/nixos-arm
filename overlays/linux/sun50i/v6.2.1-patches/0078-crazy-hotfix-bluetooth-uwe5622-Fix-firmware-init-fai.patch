@@ -1,0 +1,28 @@
+From 884f51af0f28c9a491e39beece92f228e8be89e1 Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Mon, 6 Jun 2022 22:08:31 +0500
+Subject: [PATCH 078/114] [crazy-hotfix] bluetooth: uwe5622: Fix firmware init
+ fail
+
+---
+ net/bluetooth/hci_sync.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/net/bluetooth/hci_sync.c b/net/bluetooth/hci_sync.c
+index 117eedb6f709..c3fd71d1e415 100644
+--- a/net/bluetooth/hci_sync.c
++++ b/net/bluetooth/hci_sync.c
+@@ -4434,8 +4434,10 @@ static int hci_init_sync(struct hci_dev *hdev)
+ 		return 0;
+ 
+ 	err = hci_init3_sync(hdev);
++#if IS_ENABLED(CONFIG_RK_WIFI_DEVICE_UWE5621) || IS_ENABLED(CONFIG_AW_WIFI_DEVICE_UWE5622)
+ 	if (err < 0)
+ 		return err;
++#endif /* IS_ENABLED(CONFIG_RK_WIFI_DEVICE_UWE5621) || IS_ENABLED(CONFIG_AW_WIFI_DEVICE_UWE5622) */
+ 
+ 	err = hci_init4_sync(hdev);
+ 	if (err < 0)
+-- 
+2.38.3
+

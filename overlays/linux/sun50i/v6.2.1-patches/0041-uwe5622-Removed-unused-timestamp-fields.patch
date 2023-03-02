@@ -1,0 +1,32 @@
+From d84794210c6192a22be026957609f5e897767962 Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Wed, 16 Mar 2022 09:34:15 +0500
+Subject: [PATCH 041/114] uwe5622: Removed unused timestamp fields
+
+---
+ drivers/net/wireless/uwe5622/unisocwifi/cfg80211.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/drivers/net/wireless/uwe5622/unisocwifi/cfg80211.c b/drivers/net/wireless/uwe5622/unisocwifi/cfg80211.c
+index 1e50f74b4790..feb4a685cbfb 100644
+--- a/drivers/net/wireless/uwe5622/unisocwifi/cfg80211.c
++++ b/drivers/net/wireless/uwe5622/unisocwifi/cfg80211.c
+@@ -2162,7 +2162,6 @@ void sprdwl_report_scan_result(struct sprdwl_vif *vif, u16 chan, s16 rssi,
+ 	struct ieee80211_mgmt *mgmt = (struct ieee80211_mgmt *)frame;
+ 	struct ieee80211_channel *channel;
+ 	struct cfg80211_bss *bss;
+-	struct timespec64 ts;
+ 	u16 capability, beacon_interval;
+ 	u32 freq;
+ 	s32 signal;
+@@ -2258,7 +2257,6 @@ void sprdwl_report_connection(struct sprdwl_vif *vif,
+ 	struct ieee80211_channel *channel;
+ 	struct ieee80211_mgmt *mgmt;
+ 	struct cfg80211_bss *bss = NULL;
+-	struct timespec64 ts;
+ #ifdef WMMAC_WFA_CERTIFICATION
+ 	struct wmm_params_element *wmm_params;
+ 	int i;
+-- 
+2.38.3
+

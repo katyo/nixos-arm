@@ -1,0 +1,26 @@
+From 222890d567d43aa3d2dfd926401c617a559f8bad Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Tue, 7 Jun 2022 10:06:30 +0500
+Subject: [PATCH 083/114] Fixed sunxi-sysinfo driver dependencies
+
+---
+ drivers/char/sunxi-sysinfo/Kconfig | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/char/sunxi-sysinfo/Kconfig b/drivers/char/sunxi-sysinfo/Kconfig
+index 9b6e2f06d708..b291078c47fd 100644
+--- a/drivers/char/sunxi-sysinfo/Kconfig
++++ b/drivers/char/sunxi-sysinfo/Kconfig
+@@ -4,7 +4,8 @@
+ 
+ config SUNXI_SYS_INFO
+ 	tristate "sunxi system info driver"
+-	default y
++	depends on ARCH_SUNXI
++	depends on NVMEM_SUNXI_SID
+ 	help
+ 	  This driver is used for query system information.
+ 	  If you don't know whether need it, please select y.
+-- 
+2.38.3
+

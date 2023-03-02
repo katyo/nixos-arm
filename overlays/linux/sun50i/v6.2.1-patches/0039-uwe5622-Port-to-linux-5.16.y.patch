@@ -1,0 +1,30 @@
+From 3071ddac9ddc3720ee5b141f61f2c76450d8a978 Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Mon, 14 Feb 2022 11:04:18 +0500
+Subject: [PATCH 039/114] uwe5622: Port to linux 5.16.y
+
+---
+ drivers/net/wireless/uwe5622/unisocwifi/main.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/drivers/net/wireless/uwe5622/unisocwifi/main.c b/drivers/net/wireless/uwe5622/unisocwifi/main.c
+index a28c4bd83f11..744aec7a301a 100644
+--- a/drivers/net/wireless/uwe5622/unisocwifi/main.c
++++ b/drivers/net/wireless/uwe5622/unisocwifi/main.c
+@@ -1117,7 +1117,7 @@ static int sprdwl_get_mac_from_file(struct sprdwl_vif *vif, u8 *addr)
+ 
+ 	return 0;
+ random_mac:
+-	random_ether_addr(addr);
++	eth_random_addr(addr);
+ 	wl_warn("%s use random MAC address\n",
+ 			__func__);
+ 	/* initialize MAC addr with specific OUI */
+@@ -1736,4 +1736,3 @@ MODULE_PARM_DESC(tcp_ack_drop_enable, "valid values: [0, 1]");
+ #else
+ const unsigned int tcp_ack_drop_enable;
+ #endif
+-
+-- 
+2.38.3
+

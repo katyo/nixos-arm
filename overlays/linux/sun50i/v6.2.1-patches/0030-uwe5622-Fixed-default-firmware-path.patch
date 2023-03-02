@@ -1,0 +1,74 @@
+From cd0c37fa9c3da20c6013df13bbd9c4ffb57813a2 Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Sun, 13 Feb 2022 00:23:40 +0500
+Subject: [PATCH 030/114] uwe5622: Fixed default firmware path
+
+---
+ drivers/net/wireless/uwe5622/Makefile         |  2 +-
+ .../net/wireless/uwe5622/tty-sdio/Makefile    |  3 --
+ .../wireless/uwe5622/tty-sdio/Makefile.old    | 31 -------------------
+ 3 files changed, 1 insertion(+), 35 deletions(-)
+ delete mode 100644 drivers/net/wireless/uwe5622/tty-sdio/Makefile.old
+
+diff --git a/drivers/net/wireless/uwe5622/Makefile b/drivers/net/wireless/uwe5622/Makefile
+index 379f9a14449a..7a2aa00e8c29 100644
+--- a/drivers/net/wireless/uwe5622/Makefile
++++ b/drivers/net/wireless/uwe5622/Makefile
+@@ -6,5 +6,5 @@ UNISOCWCN_DIR := $(shell cd $(srctree)/$(src)/unisocwcn && pwd)
+ UNISOC_BSP_INCLUDE := $(UNISOCWCN_DIR)/include
+ export UNISOC_BSP_INCLUDE
+ 
+-UNISOC_FW_PATH_CONFIG := "/vendor/etc/firmware/"
++UNISOC_FW_PATH_CONFIG := "/lib/firmware/"
+ export UNISOC_FW_PATH_CONFIG
+diff --git a/drivers/net/wireless/uwe5622/tty-sdio/Makefile b/drivers/net/wireless/uwe5622/tty-sdio/Makefile
+index 9dcb75258dfe..22b31e20c108 100644
+--- a/drivers/net/wireless/uwe5622/tty-sdio/Makefile
++++ b/drivers/net/wireless/uwe5622/tty-sdio/Makefile
+@@ -1,6 +1,3 @@
+-# ccflags-y += -DDEBUG
+-# ccflags-y += -DKERNEL_VERSION_414
+-ccflags-y += -I$(srctree)/drivers/net/wireless/uwe5622/sprdwcn/include
+ ccflags-y += -DOTT_UWE
+ ccflags-y += -DWOBLE_FUN
+ 
+diff --git a/drivers/net/wireless/uwe5622/tty-sdio/Makefile.old b/drivers/net/wireless/uwe5622/tty-sdio/Makefile.old
+deleted file mode 100644
+index 76f574e5b42c..000000000000
+--- a/drivers/net/wireless/uwe5622/tty-sdio/Makefile.old
++++ /dev/null
+@@ -1,31 +0,0 @@
+-# validate lookup result
+-ifeq ($(KDIR),)
+-$(warning No KDIR found for platform $(TARGET_PLATFORM))
+-endif
+-
+-ifeq ($(BUILD),debug)
+-ccflags-y += -DDEBUG
+-endif
+-
+-ifeq ($(UNISOC_WCN_KERNEL_PATH),kernel4.14)
+-ccflags-y += -DKERNEL_VERSION_414
+-endif
+-
+-obj-m += sprdbt_tty.o
+-sprdbt_tty-objs := tty.o \
+-                   rfkill.o \
+-                   lpm.o \
+-                   alignment/sitm.o \
+-                   dump.o
+-
+-modules:
+-	$(MAKE) ARCH=$(ARCH) -C $(KDIR) M=$(CURDIR) $@
+-
+-clean:
+-	rm -f *.o  .*.o.cmd modules.order Module.symvers *.ko *.mod.c .*.ko.cmd
+-	rm -rf .tmp_versions
+-	rm -f alignment/*.o alignment/.*.o.cmd
+-
+-
+-kernelrelease:
+-	$(MAKE) ARCH=$(ARCH) -C $(KDIR) $@
+-- 
+2.38.3
+

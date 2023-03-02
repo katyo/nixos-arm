@@ -1,0 +1,32 @@
+From a9fb60a70257ec07476b92bf2b3aceb56430dece Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Sat, 4 Dec 2021 16:56:49 +0500
+Subject: [PATCH 020/114] sun8i-de33: Fixed of_sunxi_ccu_probe()
+
+---
+ drivers/clk/sunxi-ng/sun8i-de33.c | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
+
+diff --git a/drivers/clk/sunxi-ng/sun8i-de33.c b/drivers/clk/sunxi-ng/sun8i-de33.c
+index 4ce0c76d6c25..d574a7ef7729 100644
+--- a/drivers/clk/sunxi-ng/sun8i-de33.c
++++ b/drivers/clk/sunxi-ng/sun8i-de33.c
+@@ -152,14 +152,10 @@ static int sunxi_de33_clk_probe(struct platform_device *pdev)
+ 	writel(0, reg + 0x24);
+ 	writel(0x0000A980, reg + 0x28);
+ 
+-	ret = sunxi_ccu_probe(pdev->dev.of_node, reg, ccu_desc);
+-	if (ret)
+-		goto err_assert_reset;
++	of_sunxi_ccu_probe(pdev->dev.of_node, reg, ccu_desc);
+ 
+ 	return 0;
+ 
+-err_assert_reset:
+-	reset_control_assert(rstc);
+ err_disable_mod_clk:
+ 	clk_disable_unprepare(mod_clk);
+ err_disable_bus_clk:
+-- 
+2.38.3
+

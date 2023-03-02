@@ -1,0 +1,149 @@
+From d17084753fcbedd2ae00f281721904835e7c9c93 Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Tue, 7 Jun 2022 11:44:24 +0500
+Subject: [PATCH 084/114] uwe5622: Replaced sched_setscheduler() in favor of
+ sched_set_fifo()
+
+The `sched_setscheduler` does not available for kernel modules anymore.
+---
+ .../uwe5622/unisocwcn/pcie/edma_engine.c      | 11 ++-------
+ .../wireless/uwe5622/unisocwcn/sdio/sdiohal.h |  4 ----
+ .../uwe5622/unisocwcn/sdio/sdiohal_rx.c       |  5 ++--
+ .../uwe5622/unisocwcn/sdio/sdiohal_tx.c       |  4 +---
+ .../uwe5622/unisocwcn/usb/wcn_usb_rx_tx.c     | 23 +++----------------
+ 5 files changed, 8 insertions(+), 39 deletions(-)
+
+diff --git a/drivers/net/wireless/uwe5622/unisocwcn/pcie/edma_engine.c b/drivers/net/wireless/uwe5622/unisocwcn/pcie/edma_engine.c
+index f48671fc4ea6..ad42e33d469c 100644
+--- a/drivers/net/wireless/uwe5622/unisocwcn/pcie/edma_engine.c
++++ b/drivers/net/wireless/uwe5622/unisocwcn/pcie/edma_engine.c
+@@ -1434,15 +1434,8 @@ int edma_init(struct wcn_pcie_info *pcie_info)
+ 
+ 		return -1;
+ 	}
+-	do {
+-		struct sched_param param;
+-
+-		param.sched_priority = 90;
+-		ret = sched_setscheduler((struct task_struct *)edma->isr_func
+-					  .entity, SCHED_FIFO, &param);
+-		PCIE_INFO("sched_setscheduler(SCHED_FIFO), prio:%d,ret:%d\n",
+-			param.sched_priority, ret);
+-	} while (0);
++
++	sched_set_fifo((struct task_struct *)edma->isr_func.entity);
+ 
+ 	wake_up_process(edma->isr_func.entity);
+ #endif
+diff --git a/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal.h b/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal.h
+index 788341244ee7..08b924580449 100644
+--- a/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal.h
++++ b/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal.h
+@@ -94,10 +94,6 @@ extern long int sdiohal_log_level;
+ #define SDIO_RX_LIST_NUM SDIO_CHN_RX_NUM
+ #define MAX_CHAIN_NODE_NUM 100
+ 
+-/* task prio */
+-#define SDIO_TX_TASK_PRIO 89
+-#define SDIO_RX_TASK_PRIO 90
+-
+ /* mbuf max size */
+ #define MAX_MBUF_SIZE (2 << 10)
+ 
+diff --git a/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_rx.c b/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_rx.c
+index 4dca7abd4b21..443360696613 100644
+--- a/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_rx.c
++++ b/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_rx.c
+@@ -193,7 +193,6 @@ static void sdiohal_rx_wait(void)
+ int sdiohal_rx_thread(void *data)
+ {
+ 	struct sdiohal_data_t *p_data = sdiohal_get_data();
+-	struct sched_param param;
+ 	int read_len, mbuf_num;
+ 	int ret = 0;
+ 	unsigned int rx_dtbs = 0;
+@@ -204,8 +203,8 @@ int sdiohal_rx_thread(void *data)
+ 	static s64 time_total_ns;
+ 	static int times_count;
+ 
+-	param.sched_priority = SDIO_RX_TASK_PRIO;
+-	sched_setscheduler(current, SCHED_FIFO, &param);
++	sched_set_fifo(current);
++
+ 	sdiohal_rx_adapt_set_dtbs(0);
+ 	sdiohal_rx_adapt_set_pac_num(1);
+ 
+diff --git a/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_tx.c b/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_tx.c
+index f288062c7b43..67aaca35e672 100644
+--- a/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_tx.c
++++ b/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_tx.c
+@@ -135,13 +135,11 @@ int sdiohal_tx_thread(void *data)
+ {
+ 	struct sdiohal_data_t *p_data = sdiohal_get_data();
+ 	struct sdiohal_list_t data_list;
+-	struct sched_param param;
+ 	ktime_t tm_begin, tm_end;
+ 	static s64 time_total_ns;
+ 	static int times_count;
+ 
+-	param.sched_priority = SDIO_TX_TASK_PRIO;
+-	sched_setscheduler(current, SCHED_FIFO, &param);
++	sched_set_fifo(current);
+ 
+ 	while (1) {
+ 		/* Wait the semaphore */
+diff --git a/drivers/net/wireless/uwe5622/unisocwcn/usb/wcn_usb_rx_tx.c b/drivers/net/wireless/uwe5622/unisocwcn/usb/wcn_usb_rx_tx.c
+index 28ade1f394ae..092d2882cff9 100644
+--- a/drivers/net/wireless/uwe5622/unisocwcn/usb/wcn_usb_rx_tx.c
++++ b/drivers/net/wireless/uwe5622/unisocwcn/usb/wcn_usb_rx_tx.c
+@@ -608,12 +608,7 @@ static int rx_copy_work_func(void *work)
+ 	struct wcn_usb_work_data *work_data;
+ 	struct list_head rx_tx_head;
+ 
+-	do {
+-		struct sched_param param;
+-
+-		param.sched_priority = -20;
+-		sched_setscheduler(current, SCHED_FIFO, &param);
+-	} while (0);
++	sched_set_fifo_low(current);
+ 
+ 	copy_kthread = (struct wcn_usb_copy_kthread *)work;
+ 
+@@ -703,13 +698,7 @@ static int tx_copy_work_func(void *work)
+ 	int ret;
+ 	int mbuf_num;
+ 
+-
+-	do {
+-		struct sched_param param;
+-
+-		param.sched_priority = -20;
+-		sched_setscheduler(current, SCHED_FIFO, &param);
+-	} while (0);
++	sched_set_fifo_low(current);
+ 
+ 	copy_kthread = (struct wcn_usb_copy_kthread *)work;
+ 
+@@ -1385,12 +1374,7 @@ int wcn_usb_work_func(void *work)
+ 	work_data = (struct wcn_usb_work_data *)work;
+ 
+ #if 0
+-	do {
+-		struct sched_param param;
+-
+-		param.sched_priority = 1;
+-		sched_setscheduler(current, SCHED_FIFO, &param);
+-	} while (0);
++	sched_set_fifo(current);
+ #endif
+ 
+ GET_RX_TX_HEAD:
+@@ -1716,4 +1700,3 @@ int wcn_usb_apostle_begin(int chn)
+ {
+ 	return wcn_usb_apostle_fire(chn, wcn_usb_rx_apostle_callback);
+ }
+-
+-- 
+2.38.3
+

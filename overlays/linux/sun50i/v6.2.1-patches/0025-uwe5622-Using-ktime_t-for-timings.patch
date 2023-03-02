@@ -1,0 +1,804 @@
+From 6f1d3fac87637e1af58390f282fa24eb35914fa3 Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Tue, 14 Dec 2021 14:29:00 +0500
+Subject: [PATCH 025/114] uwe5622: Using ktime_t for timings
+
+---
+ drivers/net/wireless/uwe5622/tty-sdio/dump.c  | 20 ++-----
+ drivers/net/wireless/uwe5622/tty-sdio/dump.h  | 10 +---
+ .../uwe5622/unisocwcn/pcie/edma_engine.c      | 10 ++--
+ .../uwe5622/unisocwcn/platform/wcn_procfs.c   |  2 +-
+ .../wireless/uwe5622/unisocwcn/sdio/sdiohal.h | 17 ++----
+ .../uwe5622/unisocwcn/sdio/sdiohal_common.c   | 50 +++++++++-------
+ .../uwe5622/unisocwcn/sdio/sdiohal_ctl.c      | 58 +++++++++---------
+ .../uwe5622/unisocwcn/sdio/sdiohal_main.c     | 60 +++++++++++--------
+ .../uwe5622/unisocwcn/sdio/sdiohal_rx.c       | 24 ++++----
+ .../uwe5622/unisocwcn/sdio/sdiohal_tx.c       | 24 ++++----
+ .../uwe5622/unisocwcn/usb/wcn_usb_test.c      |  4 +-
+ .../wireless/uwe5622/unisocwifi/cfg80211.c    |  4 +-
+ drivers/net/wireless/uwe5622/unisocwifi/msg.c |  2 +-
+ .../net/wireless/uwe5622/unisocwifi/tx_msg.c  |  4 +-
+ .../net/wireless/uwe5622/unisocwifi/wl_intf.c |  4 +-
+ 15 files changed, 140 insertions(+), 153 deletions(-)
+
+diff --git a/drivers/net/wireless/uwe5622/tty-sdio/dump.c b/drivers/net/wireless/uwe5622/tty-sdio/dump.c
+index b727bc773a0c..613123ff2f5f 100644
+--- a/drivers/net/wireless/uwe5622/tty-sdio/dump.c
++++ b/drivers/net/wireless/uwe5622/tty-sdio/dump.c
+@@ -37,25 +37,17 @@ static void data_left_shift(unsigned char data_inout)
+ 	}
+ }
+ 
+-void do_gettimeofday(struct timeval *tv)
+-{
+-	struct timespec64 ts;
+-	ktime_get_real_ts64(&ts);
+-	tv->tv_sec = ts.tv_sec;
+-	tv->tv_usec = ts.tv_nsec/1000;
+-}
+-
+ static void get_time(unsigned char data_inout)
+ {
+ 	switch (data_inout) {
+ 	case BT_DATA_OUT:
+-		do_gettimeofday(&(data_dump->txtime_t[BT_MAX_DUMP_FRAME_LEN - 1].tv));
+-		rtc_time_to_tm(data_dump->txtime_t[BT_MAX_DUMP_FRAME_LEN - 1].tv.tv_sec,
++		ktime_get_real_ts64(&data_dump->txtime_t[BT_MAX_DUMP_FRAME_LEN - 1].tv);
++		rtc_time64_to_tm(data_dump->txtime_t[BT_MAX_DUMP_FRAME_LEN - 1].tv.tv_sec,
+ 		&(data_dump->txtime_t[BT_MAX_DUMP_FRAME_LEN - 1].rtc_t));
+ 		break;
+ 	case BT_DATA_IN:
+-		do_gettimeofday(&(data_dump->rxtime_t[BT_MAX_DUMP_FRAME_LEN - 1].tv));
+-		rtc_time_to_tm(data_dump->rxtime_t[BT_MAX_DUMP_FRAME_LEN - 1].tv.tv_sec,
++		ktime_get_real_ts64(&data_dump->rxtime_t[BT_MAX_DUMP_FRAME_LEN - 1].tv);
++		rtc_time64_to_tm(data_dump->rxtime_t[BT_MAX_DUMP_FRAME_LEN - 1].tv.tv_sec,
+ 		&(data_dump->rxtime_t[BT_MAX_DUMP_FRAME_LEN - 1].rtc_t));
+ 		break;
+ 	default:
+@@ -112,7 +104,7 @@ void bt_host_data_printf(void)
+ 		printk("%d-%d-%d %d:%d:%d.%06ld ", 1900 + data_dump->txtime_t[loop_count_j].rtc_t.tm_year,
+ 				1 + data_dump->txtime_t[loop_count_j].rtc_t.tm_mon, data_dump->txtime_t[loop_count_j].rtc_t.tm_mday,
+ 				data_dump->txtime_t[loop_count_j].rtc_t.tm_hour, data_dump->txtime_t[loop_count_j].rtc_t.tm_min,
+-				data_dump->txtime_t[loop_count_j].rtc_t.tm_sec, data_dump->txtime_t[loop_count_j].tv.tv_usec);
++				data_dump->txtime_t[loop_count_j].rtc_t.tm_sec, data_dump->txtime_t[loop_count_j].tv.tv_nsec/1000);
+ 		while (loop_count_i < BT_MAX_DUMP_DATA_LEN) {
+ 			printk("%02X ", data_dump->tx[loop_count_j][loop_count_i++]);
+ 		}
+@@ -126,7 +118,7 @@ void bt_host_data_printf(void)
+ 		printk("%d-%d-%d %d:%d:%d.%06ld ", 1900 + data_dump->rxtime_t[loop_count_j].rtc_t.tm_year,
+ 				1 + data_dump->rxtime_t[loop_count_j].rtc_t.tm_mon, data_dump->rxtime_t[loop_count_j].rtc_t.tm_mday,
+ 				data_dump->rxtime_t[loop_count_j].rtc_t.tm_hour, data_dump->rxtime_t[loop_count_j].rtc_t.tm_min,
+-				data_dump->rxtime_t[loop_count_j].rtc_t.tm_sec, data_dump->rxtime_t[loop_count_j].tv.tv_usec);
++				data_dump->rxtime_t[loop_count_j].rtc_t.tm_sec, data_dump->rxtime_t[loop_count_j].tv.tv_nsec/1000);
+ 		while (loop_count_i < BT_MAX_DUMP_DATA_LEN) {
+ 			printk("%02X ", data_dump->rx[loop_count_j][loop_count_i++]);
+ 		}
+diff --git a/drivers/net/wireless/uwe5622/tty-sdio/dump.h b/drivers/net/wireless/uwe5622/tty-sdio/dump.h
+index f97b8365ae25..d8d1b5a9a0d7 100644
+--- a/drivers/net/wireless/uwe5622/tty-sdio/dump.h
++++ b/drivers/net/wireless/uwe5622/tty-sdio/dump.h
+@@ -15,14 +15,6 @@
+ #define __DUMP_H
+ #include <linux/time.h>
+ #include <linux/rtc.h>
+-#ifndef timespec
+-#define timespec timespec64
+-#define timespec_to_ns timespec64_to_ns
+-#define getnstimeofday ktime_get_real_ts64
+-#define timeval __kernel_old_timeval
+-#define rtc_time_to_tm rtc_time64_to_tm
+-#define timeval_to_ns ktime_to_ns
+-#endif
+ 
+ #define BT_MAX_DUMP_FRAME_LEN 2
+ #define BT_MAX_DUMP_DATA_LEN 20
+@@ -35,7 +27,7 @@
+ 
+ typedef struct bt_host_time {
+ 	struct rtc_time rtc_t;
+-	struct timeval tv;
++	struct timespec64 tv;
+ } bt_host_time;
+ 
+ typedef struct bt_host_data_dump {
+diff --git a/drivers/net/wireless/uwe5622/unisocwcn/pcie/edma_engine.c b/drivers/net/wireless/uwe5622/unisocwcn/pcie/edma_engine.c
+index 65e8bfba89e0..f48671fc4ea6 100644
+--- a/drivers/net/wireless/uwe5622/unisocwcn/pcie/edma_engine.c
++++ b/drivers/net/wireless/uwe5622/unisocwcn/pcie/edma_engine.c
+@@ -29,7 +29,7 @@ static struct edma_info g_edma = { 0 };
+ static unsigned char *mpool_buffer;
+ static struct dma_buf mpool_dm = {0};
+ 
+-int time_sub_us(struct timeval *start, struct timeval *end)
++int time_sub_us(struct timespec64 *start, struct timespec64 *end)
+ {
+ 	return (end->tv_sec - start->tv_sec)*1000000 +
+ 		(end->tv_usec - start->tv_usec);
+@@ -99,8 +99,8 @@ static int wait_wcnevent(struct event_t *event, int timeout)
+ {
+ 	if (timeout < 0) {
+ 		int dt;
+-		struct timeval time;
+-		struct timespec now;
++		struct timespec64 time;
++		struct timespec64 now;
+ 
+ 		getnstimeofday(&now);
+ 		time.tv_sec = now.tv_sec;
+@@ -1384,8 +1384,8 @@ int edma_tp_count(int chn, void *head, void *tail, int num)
+ 	int i, dt;
+ 	struct mbuf_t *mbuf;
+ 	static int bytecount;
+-	static struct timeval start_time, time;
+-	struct timespec now;
++	static struct timespec64 start_time, time;
++	struct timespec64 now;
+ 
+ 	for (i = 0, mbuf = (struct mbuf_t *)head; i < num; i++) {
+ 		getnstimeofday(&now);
+diff --git a/drivers/net/wireless/uwe5622/unisocwcn/platform/wcn_procfs.c b/drivers/net/wireless/uwe5622/unisocwcn/platform/wcn_procfs.c
+index 2edb7903d80e..06e632675946 100644
+--- a/drivers/net/wireless/uwe5622/unisocwcn/platform/wcn_procfs.c
++++ b/drivers/net/wireless/uwe5622/unisocwcn/platform/wcn_procfs.c
+@@ -932,7 +932,7 @@ static ssize_t mdbg_proc_write(struct file *filp,
+ #ifndef CONFIG_SC2342_INTEG
+ 	/* loopcheck add kernel time ms/1000 */
+ 	if (strncmp(mdbg_proc->write_buf, "at+loopcheck", 12) == 0) {
+-		/* struct timespec now; */
++		/* struct timespec64 now; */
+ 		unsigned long int ns = local_clock();
+ 		unsigned long int time = marlin_bootup_time_get();
+ 		unsigned int ap_t = MARLIN_64B_NS_TO_32B_MS(ns);
+diff --git a/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal.h b/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal.h
+index 55eda732610b..edb45f70377f 100644
+--- a/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal.h
++++ b/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal.h
+@@ -5,14 +5,7 @@
+ #include <linux/device.h>
+ #include <linux/scatterlist.h>
+ #include <linux/slab.h>
+-#ifndef timespec
+-#define timespec timespec64
+-#define timespec_to_ns timespec64_to_ns
+-#define getnstimeofday ktime_get_real_ts64
+-#define timeval __kernel_old_timeval
+-#define rtc_time_to_tm rtc_time64_to_tm
+-#define timeval_to_ns ktime_to_ns
+-#endif
++#include <linux/ktime.h>
+ 
+ #include <linux/version.h>
+ #if KERNEL_VERSION(4, 14, 0) <= LINUX_VERSION_CODE
+@@ -364,10 +357,10 @@ struct sdiohal_data_t {
+ 	char *dtbs_buf;
+ 
+ 	/* for performance statics */
+-	struct timespec tm_begin_sch;
+-	struct timespec tm_end_sch;
+-	struct timespec tm_begin_irq;
+-	struct timespec tm_end_irq;
++	ktime_t tm_begin_sch;
++	ktime_t tm_end_sch;
++	ktime_t tm_begin_irq;
++	ktime_t tm_end_irq;
+ 
+ 	struct wakeup_source *scan_ws;
+ 	struct completion scan_done;
+diff --git a/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_common.c b/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_common.c
+index 8896272a950f..f55829bb096f 100644
+--- a/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_common.c
++++ b/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_common.c
+@@ -651,8 +651,8 @@ int sdiohal_tx_list_denq(struct sdiohal_list_t *data_list)
+ 	struct mutex *chn_callback = p_data->callback_lock;
+ 	struct mchn_ops_t *sdiohal_ops;
+ 
+-	struct timespec tm_begin, tm_end;
+-	static long time_total_ns;
++	ktime_t tm_begin, tm_end;
++	static s64 time_total_ns;
+ 	static int times_count;
+ 
+ 	sdiohal_tx_pop_assignment(data_list);
+@@ -675,7 +675,7 @@ int sdiohal_tx_list_denq(struct sdiohal_list_t *data_list)
+ 			continue;
+ 		}
+ 
+-		getnstimeofday(&tm_begin);
++		tm_begin = ktime_get();
+ 
+ 		sdiohal_callback_lock(&chn_callback[channel]);
+ 		sdiohal_ops = chn_ops(channel);
+@@ -711,12 +711,12 @@ int sdiohal_tx_list_denq(struct sdiohal_list_t *data_list)
+ 		tx_list->node_num = 0;
+ 		sdiohal_callback_unlock(&chn_callback[channel]);
+ 
+-		getnstimeofday(&tm_end);
+-		time_total_ns += timespec_to_ns(&tm_end)
+-			- timespec_to_ns(&tm_begin);
++		tm_end = ktime_get();
++		time_total_ns += ktime_to_ns(ktime_sub(tm_end, tm_begin));
+ 		times_count++;
++
+ 		if (!(times_count % PERFORMANCE_COUNT)) {
+-			sdiohal_pr_perf("tx pop callback,avg time:%ld\n",
++			sdiohal_pr_perf("tx pop callback,avg time:%lld\n",
+ 					(time_total_ns / PERFORMANCE_COUNT));
+ 			time_total_ns = 0;
+ 			times_count = 0;
+@@ -735,8 +735,8 @@ int sdiohal_rx_list_dispatch(void)
+ 	struct mutex *chn_callback = p_data->callback_lock;
+ 	struct mchn_ops_t *sdiohal_ops;
+ 
+-	struct timespec tm_begin, tm_end;
+-	static long time_total_ns;
++	ktime_t tm_begin, tm_end;
++	static s64 time_total_ns;
+ 	static int times_count;
+ 
+ 	if (unlikely(p_data->flag_init != true))
+@@ -760,7 +760,7 @@ int sdiohal_rx_list_dispatch(void)
+ 			continue;
+ 		}
+ 
+-		getnstimeofday(&tm_begin);
++		tm_begin = ktime_get();
+ 
+ 		sdiohal_callback_lock(&chn_callback[channel]);
+ 		sdiohal_ops = chn_ops(channel);
+@@ -801,12 +801,13 @@ int sdiohal_rx_list_dispatch(void)
+ 		rx_list->node_num = 0;
+ 		sdiohal_callback_unlock(&chn_callback[channel]);
+ 
+-		getnstimeofday(&tm_end);
+-		time_total_ns += timespec_to_ns(&tm_end)
+-			- timespec_to_ns(&tm_begin);
++		tm_end = ktime_get();
++
++		time_total_ns += ktime_to_ns(ktime_sub(tm_end, tm_begin));
+ 		times_count++;
++
+ 		if (!(times_count % PERFORMANCE_COUNT)) {
+-			sdiohal_pr_perf("rx pop callback,avg time:%ld\n",
++			sdiohal_pr_perf("rx pop callback,avg time:%lld\n",
+ 					(time_total_ns / PERFORMANCE_COUNT));
+ 			time_total_ns = 0;
+ 			times_count = 0;
+@@ -1173,13 +1174,13 @@ int sdiohal_list_push(int channel, struct mbuf_t *head,
+ 		      struct mbuf_t *tail, int num)
+ {
+ 	struct sdiohal_data_t *p_data = sdiohal_get_data();
+-	struct timespec tm_begin, tm_end;
+-	static long time_total_ns;
++	ktime_t tm_begin, tm_end;
++	static s64 time_total_ns;
+ 	static int times_count;
+ 	struct mbuf_t *mbuf_node;
+ 	int i;
+ 
+-	getnstimeofday(&tm_begin);
++	tm_begin = ktime_get();
+ 
+ 	if (unlikely(p_data->flag_init != true))
+ 		return -ENODEV;
+@@ -1235,21 +1236,24 @@ int sdiohal_list_push(int channel, struct mbuf_t *head,
+ 
+ 		sdiohal_tx_list_enq(channel, head, tail, num);
+ 
+-		getnstimeofday(&tm_end);
+-		time_total_ns += timespec_to_ns(&tm_end)
+-			- timespec_to_ns(&tm_begin);
++		tm_end = ktime_get();
++
++		time_total_ns += ktime_to_ns(ktime_sub(tm_end, tm_begin));
+ 		times_count++;
++
+ 		if (!(times_count % PERFORMANCE_COUNT)) {
+-			sdiohal_pr_perf("tx avg time:%ld\n",
++			sdiohal_pr_perf("tx avg time:%lld\n",
+ 					(time_total_ns / PERFORMANCE_COUNT));
+ 			time_total_ns = 0;
+ 			times_count = 0;
+ 		}
+-		getnstimeofday(&p_data->tm_begin_sch);
++
++		p_data->tm_begin_sch = ktime_get();
+ 
+ 		sdiohal_tx_up();
+-	} else
++	} else {
+ 		sdiohal_rx_list_free(head, tail, num);
++	}
+ 
+ 	return 0;
+ }
+diff --git a/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_ctl.c b/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_ctl.c
+index ceb34a487e69..95ed969705b3 100644
+--- a/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_ctl.c
++++ b/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_ctl.c
+@@ -99,8 +99,8 @@ char *tp_tx_buf[TP_TX_BUF_CNT];
+ 
+ struct mchn_ops_t at_tx_ops;
+ struct mchn_ops_t at_rx_ops;
+-struct timeval tp_tx_start_time;
+-struct timeval tp_tx_stop_time;
++ktime_t tp_tx_start_time;
++ktime_t tp_tx_stop_time;
+ int tp_tx_cnt;
+ int tp_tx_flag;
+ int tp_tx_buf_cnt = TP_TX_BUF_CNT;
+@@ -224,26 +224,24 @@ static int sdiohal_throughput_tx(void)
+ 
+ static void sdiohal_throughput_tx_compute_time(void)
+ {
+-	static signed long long times_count;
+-	struct timespec now;
++	static s64 times_count;
+ 
+ 	if (tp_tx_flag != 1)
+ 		return;
+ 
+ 	/* throughput test */
+ 	tp_tx_cnt++;
++
+ 	if (tp_tx_cnt % 500 == 0) {
+-		getnstimeofday(&now);
+-		tp_tx_stop_time.tv_sec = now.tv_sec;
+-		tp_tx_stop_time.tv_usec = now.tv_nsec/1000;
+-		times_count = timeval_to_ns(&tp_tx_stop_time) -
+-			timeval_to_ns(&tp_tx_start_time);
++		tp_tx_stop_time = ktime_get();
++
++		times_count = ktime_to_ns(ktime_sub(tp_tx_stop_time, tp_tx_start_time));
++
+ 		sdiohal_info("tx->times(500c) is %lldns, tx %d, rx %d\n",
+ 			     times_count, tp_tx_cnt, rx_pop_cnt);
++
+ 		tp_tx_cnt = 0;
+-		getnstimeofday(&now);
+-		tp_tx_start_time.tv_sec = now.tv_sec;
+-		tp_tx_start_time.tv_usec = now.tv_nsec/1000;
++		tp_tx_start_time = ktime_get();
+ 	}
+ 	sdiohal_throughput_tx();
+ }
+@@ -547,14 +545,13 @@ int at_list_tx_pop(int channel, struct mbuf_t *head,
+ }
+ 
+ int tp_rx_cnt;
+-struct timeval tp_rx_start_time;
+-struct timeval tp_rx_stop_time;
+-struct timespec tp_tm_begin;
++ktime_t tp_rx_start_time;
++ktime_t tp_rx_stop_time;
++ktime_t tp_tm_begin;
+ int at_list_rx_pop(int channel, struct mbuf_t *head,
+ 		   struct mbuf_t *tail, int num)
+ {
+-	static signed long long times_count;
+-	struct timespec now;
++	static s64 times_count;
+ 
+ 	sdiohal_debug("%s channel:%d head:%p tail:%p num:%d\n",
+ 		     __func__, channel, head, tail, num);
+@@ -571,19 +568,18 @@ int at_list_rx_pop(int channel, struct mbuf_t *head,
+ 	/* throughput test */
+ 	tp_rx_cnt += num;
+ 	if (tp_rx_cnt / (500*64) == 1) {
+-		getnstimeofday(&now);
+-		tp_rx_stop_time.tv_sec = now.tv_sec;
+-		tp_rx_stop_time.tv_usec = now.tv_nsec/1000;
+-		times_count = timeval_to_ns(&tp_rx_stop_time)
+-			- timeval_to_ns(&tp_rx_start_time);
++		tp_rx_stop_time = ktime_get();
++
++		times_count = ktime_to_ns(ktime_sub(tp_rx_stop_time, tp_rx_start_time));
++
+ 		sdiohal_info("rx->times(%dc) is %lldns, tx %d, rx %d\n",
+ 			     tp_rx_cnt, times_count, tp_tx_cnt, rx_pop_cnt);
++
+ 		tp_rx_cnt = 0;
+-		getnstimeofday(&now);
+-		tp_rx_start_time.tv_sec = now.tv_sec;
+-		tp_rx_start_time.tv_usec = now.tv_nsec/1000;
++		tp_rx_start_time = ktime_get();
+ 	}
+-	getnstimeofday(&tp_tm_begin);
++
++	tp_tm_begin = ktime_get();
+ 
+ 	return 0;
+ }
+@@ -837,7 +833,6 @@ static ssize_t at_cmd_write(struct file *filp,
+ 	long int long_data;
+ 	int ret;
+ 	unsigned char *send_buf = NULL;
+-	struct timespec now;
+ 
+ 	if (count > SDIOHAL_WRITE_SIZE) {
+ 		sdiohal_err("%s write size > %d\n",
+@@ -1126,13 +1121,15 @@ static ssize_t at_cmd_write(struct file *filp,
+ 	if (strstr((cmd_buf + PUB_HEAD_RSV), "tp")) {
+ 		sdiohal_find_num(cmd_buf + PUB_HEAD_RSV,
+ 			&tp_tx_buf_cnt, &tp_tx_buf_len);
++
+ 		sdiohal_info("%s buf_cnt=%d buf_len=%d\n",
+ 			__func__, tp_tx_buf_cnt, tp_tx_buf_len);
++
+ 		tp_tx_flag = 1;
+ 		tp_tx_cnt = 0;
+-		getnstimeofday(&now);
+-		tp_tx_start_time.tv_sec = now.tv_sec;
+-		tp_tx_start_time.tv_usec = now.tv_nsec/1000;
++
++		tp_tx_start_time = ktime_get();
++
+ 		if ((tp_tx_buf_cnt <= TP_TX_BUF_CNT) &&
+ 			(tp_tx_buf_len <= TP_TX_BUF_LEN)) {
+ 			sprdwcn_bus_chn_deinit(&at_tx_ops);
+@@ -1258,4 +1255,3 @@ void sdiohal_debug_deinit(void)
+ 	debugfs_remove_recursive(debug_root);
+ 	at_cmd_deinit();
+ }
+-
+diff --git a/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_main.c b/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_main.c
+index 920645b2b6b1..e90cc047ce20 100644
+--- a/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_main.c
++++ b/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_main.c
+@@ -235,11 +235,12 @@ int sdiohal_sdio_pt_write(unsigned char *src, unsigned int datalen)
+ {
+ 	struct sdiohal_data_t *p_data = sdiohal_get_data();
+ 	int ret = 0;
+-	struct timespec tm_begin, tm_end;
+-	static long time_total_ns;
++	ktime_t tm_begin, tm_end;
++	static s64 time_total_ns;
+ 	static int times_count;
+ 
+-	getnstimeofday(&tm_begin);
++	tm_begin = ktime_get();
++
+ 	if (unlikely(p_data->card_dump_flag == true)) {
+ 		sdiohal_err("%s line %d dump happened\n", __func__, __LINE__);
+ 		return -ENODEV;
+@@ -266,11 +267,13 @@ int sdiohal_sdio_pt_write(unsigned char *src, unsigned int datalen)
+ 	sdiohal_op_leave();
+ 	sdiohal_card_unlock(p_data);
+ 
+-	getnstimeofday(&tm_end);
+-	time_total_ns += timespec_to_ns(&tm_end) - timespec_to_ns(&tm_begin);
++	tm_end = ktime_get();
++
++	time_total_ns += ktime_to_ns(ktime_sub(tm_end, tm_begin));
+ 	times_count++;
++
+ 	if (!(times_count % PERFORMANCE_COUNT)) {
+-		sdiohal_pr_perf("tx avg time:%ld len=%d\n",
++		sdiohal_pr_perf("tx avg time:%lld len=%d\n",
+ 			(time_total_ns / PERFORMANCE_COUNT), datalen);
+ 		time_total_ns = 0;
+ 		times_count = 0;
+@@ -283,11 +286,11 @@ int sdiohal_sdio_pt_read(unsigned char *src, unsigned int datalen)
+ {
+ 	struct sdiohal_data_t *p_data = sdiohal_get_data();
+ 	int ret = 0;
+-	struct timespec tm_begin, tm_end;
+-	static long time_total_ns;
++	ktime_t tm_begin, tm_end;
++	static s64 time_total_ns;
+ 	static int times_count;
+ 
+-	getnstimeofday(&tm_begin);
++	tm_begin = ktime_get();
+ 
+ 	if (unlikely(p_data->card_dump_flag == true)) {
+ 		sdiohal_err("%s line %d dump happened\n", __func__, __LINE__);
+@@ -308,11 +311,13 @@ int sdiohal_sdio_pt_read(unsigned char *src, unsigned int datalen)
+ 	sdiohal_op_leave();
+ 	sdiohal_card_unlock(p_data);
+ 
+-	getnstimeofday(&tm_end);
+-	time_total_ns += timespec_to_ns(&tm_end) - timespec_to_ns(&tm_begin);
++	tm_end = ktime_get();
++
++	time_total_ns += ktime_to_ns(ktime_sub(tm_end, tm_begin));
+ 	times_count++;
++
+ 	if (!(times_count % PERFORMANCE_COUNT)) {
+-		sdiohal_pr_perf("rx avg time:%ld len=%d\n",
++		sdiohal_pr_perf("rx avg time:%lld len=%d\n",
+ 			(time_total_ns / PERFORMANCE_COUNT), datalen);
+ 		time_total_ns = 0;
+ 		times_count = 0;
+@@ -455,11 +460,11 @@ int sdiohal_adma_pt_write(struct sdiohal_list_t *data_list)
+ {
+ 	struct sdiohal_data_t *p_data = sdiohal_get_data();
+ 	int ret = 0;
+-	struct timespec tm_begin, tm_end;
+-	static long time_total_ns;
++	ktime_t tm_begin, tm_end;
++	static s64 time_total_ns;
+ 	static int times_count;
+ 
+-	getnstimeofday(&tm_begin);
++	tm_begin = ktime_get();
+ 
+ 	if (unlikely(p_data->card_dump_flag == true)) {
+ 		sdiohal_err("%s line %d dump happened\n", __func__, __LINE__);
+@@ -482,11 +487,13 @@ int sdiohal_adma_pt_write(struct sdiohal_list_t *data_list)
+ 	sdiohal_op_leave();
+ 	sdiohal_card_unlock(p_data);
+ 
+-	getnstimeofday(&tm_end);
+-	time_total_ns += timespec_to_ns(&tm_end) - timespec_to_ns(&tm_begin);
++	tm_end = ktime_get();
++
++	time_total_ns += ktime_to_ns(ktime_sub(tm_end, tm_begin));
+ 	times_count++;
++
+ 	if (!(times_count % PERFORMANCE_COUNT)) {
+-		sdiohal_pr_perf("tx avg time:%ld\n",
++		sdiohal_pr_perf("tx avg time:%lld\n",
+ 			(time_total_ns / PERFORMANCE_COUNT));
+ 		time_total_ns = 0;
+ 		times_count = 0;
+@@ -499,11 +506,11 @@ int sdiohal_adma_pt_read(struct sdiohal_list_t *data_list)
+ {
+ 	struct sdiohal_data_t *p_data = sdiohal_get_data();
+ 	int ret = 0;
+-	struct timespec tm_begin, tm_end;
+-	static long time_total_ns;
++	ktime_t tm_begin, tm_end;
++	static s64 time_total_ns;
+ 	static int times_count;
+ 
+-	getnstimeofday(&tm_begin);
++	tm_begin = ktime_get();
+ 
+ 	if (unlikely(p_data->card_dump_flag == true)) {
+ 		sdiohal_err("%s line %d dump happened\n", __func__, __LINE__);
+@@ -524,11 +531,13 @@ int sdiohal_adma_pt_read(struct sdiohal_list_t *data_list)
+ 	sdiohal_op_leave();
+ 	sdiohal_card_unlock(p_data);
+ 
+-	getnstimeofday(&tm_end);
+-	time_total_ns += timespec_to_ns(&tm_end) - timespec_to_ns(&tm_begin);
++	tm_end = ktime_get();
++
++	time_total_ns += ktime_to_ns(ktime_sub(tm_end, tm_begin));
+ 	times_count++;
++
+ 	if (!(times_count % PERFORMANCE_COUNT)) {
+-		sdiohal_pr_perf("rx avg time:%ld\n",
++		sdiohal_pr_perf("rx avg time:%lld\n",
+ 			(time_total_ns / PERFORMANCE_COUNT));
+ 		time_total_ns = 0;
+ 		times_count = 0;
+@@ -1168,7 +1177,7 @@ static irqreturn_t sdiohal_irq_handler(int irq, void *para)
+ 	sdiohal_lock_rx_ws();
+ 	sdiohal_disable_rx_irq(irq);
+ 
+-	getnstimeofday(&p_data->tm_begin_irq);
++	p_data->tm_begin_irq = ktime_get();
+ 	sdiohal_rx_up();
+ 
+ 	return IRQ_HANDLED;
+@@ -2310,4 +2319,3 @@ void sdiohal_exit(void)
+ 
+ 	sdiohal_info("sdiohal_exit ok\n");
+ }
+-
+diff --git a/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_rx.c b/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_rx.c
+index 287d17c959db..6a3070026421 100644
+--- a/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_rx.c
++++ b/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_rx.c
+@@ -200,8 +200,8 @@ int sdiohal_rx_thread(void *data)
+ 	unsigned int valid_len = 0;
+ 	static char *rx_buf;
+ 	struct sdiohal_list_t *data_list = NULL;
+-	struct timespec tm_begin, tm_end;
+-	static long time_total_ns;
++	ktime_t tm_begin, tm_end;
++	static s64 time_total_ns;
+ 	static int times_count;
+ 
+ 	param.sched_priority = SDIO_RX_TASK_PRIO;
+@@ -223,16 +223,17 @@ int sdiohal_rx_thread(void *data)
+ 			continue;
+ 		}
+ 
+-		getnstimeofday(&p_data->tm_end_irq);
+-		sdiohal_pr_perf("rx sch time:%ld\n",
+-				(long)(timespec_to_ns(&p_data->tm_end_irq)
+-				- timespec_to_ns(&p_data->tm_begin_irq)));
++		p_data->tm_end_irq = ktime_get();
++
++		sdiohal_pr_perf("rx sch time:%lld\n",
++				ktime_to_ns(ktime_sub(p_data->tm_end_irq,
++															p_data->tm_begin_irq)));
+ 
+ 		sdiohal_resume_wait();
+ 		sdiohal_cp_rx_wakeup(PACKER_RX);
+ 
+ read_again:
+-		getnstimeofday(&tm_begin);
++		tm_begin = ktime_get();
+ 
+ 		if (p_data->adma_rx_enable) {
+ 			/* read len is packet num */
+@@ -304,12 +305,13 @@ int sdiohal_rx_thread(void *data)
+ 		}
+ 
+ submit_list:
+-		getnstimeofday(&tm_end);
+-		time_total_ns += timespec_to_ns(&tm_end)
+-			- timespec_to_ns(&tm_begin);
++		tm_end = ktime_get();
++
++		time_total_ns += ktime_to_ns(ktime_sub(tm_end, tm_begin));
+ 		times_count++;
++
+ 		if (!(times_count % PERFORMANCE_COUNT)) {
+-			sdiohal_pr_perf("rx list avg time:%ld\n",
++			sdiohal_pr_perf("rx list avg time:%lld\n",
+ 					(time_total_ns / PERFORMANCE_COUNT));
+ 			time_total_ns = 0;
+ 			times_count = 0;
+diff --git a/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_tx.c b/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_tx.c
+index 540a589770b4..86925d277b96 100644
+--- a/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_tx.c
++++ b/drivers/net/wireless/uwe5622/unisocwcn/sdio/sdiohal_tx.c
+@@ -136,8 +136,8 @@ int sdiohal_tx_thread(void *data)
+ 	struct sdiohal_data_t *p_data = sdiohal_get_data();
+ 	struct sdiohal_list_t data_list;
+ 	struct sched_param param;
+-	struct timespec tm_begin, tm_end;
+-	static long time_total_ns;
++	ktime_t tm_begin, tm_end;
++	static s64 time_total_ns;
+ 	static int times_count;
+ 
+ 	param.sched_priority = SDIO_TX_TASK_PRIO;
+@@ -154,10 +154,11 @@ int sdiohal_tx_thread(void *data)
+ 			continue;
+ 		}
+ 
+-		getnstimeofday(&p_data->tm_end_sch);
+-		sdiohal_pr_perf("tx sch time:%ld\n",
+-			(long)(timespec_to_ns(&p_data->tm_end_sch)
+-			- timespec_to_ns(&p_data->tm_begin_sch)));
++		p_data->tm_end_sch = ktime_get();
++
++		sdiohal_pr_perf("tx sch time:%lld\n",
++			ktime_to_ns(ktime_sub(p_data->tm_end_sch,
++														p_data->tm_begin_sch)));
+ 		sdiohal_lock_tx_ws();
+ 		sdiohal_resume_wait();
+ 
+@@ -165,7 +166,7 @@ int sdiohal_tx_thread(void *data)
+ 		sdiohal_cp_tx_wakeup(PACKER_TX);
+ 
+ 		while (!sdiohal_is_tx_list_empty()) {
+-			getnstimeofday(&tm_begin);
++			tm_begin = ktime_get();
+ 
+ 			sdiohal_tx_find_data_list(&data_list);
+ 			if (p_data->adma_tx_enable) {
+@@ -174,12 +175,12 @@ int sdiohal_tx_thread(void *data)
+ 			} else
+ 				sdiohal_tx_data_list_send(&data_list, true);
+ 
+-			getnstimeofday(&tm_end);
+-			time_total_ns += timespec_to_ns(&tm_end)
+-				- timespec_to_ns(&tm_begin);
++			tm_end = ktime_get();
++			time_total_ns += ktime_to_ns(ktime_sub(tm_end, tm_begin));
+ 			times_count++;
++
+ 			if (!(times_count % PERFORMANCE_COUNT)) {
+-				sdiohal_pr_perf("tx list avg time:%ld\n",
++				sdiohal_pr_perf("tx list avg time:%lld\n",
+ 					(time_total_ns / PERFORMANCE_COUNT));
+ 				time_total_ns = 0;
+ 				times_count = 0;
+@@ -192,4 +193,3 @@ int sdiohal_tx_thread(void *data)
+ 
+ 	return 0;
+ }
+-
+diff --git a/drivers/net/wireless/uwe5622/unisocwcn/usb/wcn_usb_test.c b/drivers/net/wireless/uwe5622/unisocwcn/usb/wcn_usb_test.c
+index c2cccc658c0d..1e2e56cbfb07 100644
+--- a/drivers/net/wireless/uwe5622/unisocwcn/usb/wcn_usb_test.c
++++ b/drivers/net/wireless/uwe5622/unisocwcn/usb/wcn_usb_test.c
+@@ -240,8 +240,8 @@ static const struct file_operations wcn_usb_channel_fops = {
+ int calculate_throughput(int channel_id, struct mbuf_t *head,
+ 		struct mbuf_t *tail, int num)
+ {
+-	static struct timespec tm_begin;
+-	struct timespec tm_end;
++	static struct timespec64 tm_begin;
++	struct timespec64 tm_end;
+ 	static int time_count;
+ 	unsigned long time_total_ns;
+ 	struct mbuf_t *mbuf;
+diff --git a/drivers/net/wireless/uwe5622/unisocwifi/cfg80211.c b/drivers/net/wireless/uwe5622/unisocwifi/cfg80211.c
+index daef880ae3c0..1e50f74b4790 100644
+--- a/drivers/net/wireless/uwe5622/unisocwifi/cfg80211.c
++++ b/drivers/net/wireless/uwe5622/unisocwifi/cfg80211.c
+@@ -2162,7 +2162,7 @@ void sprdwl_report_scan_result(struct sprdwl_vif *vif, u16 chan, s16 rssi,
+ 	struct ieee80211_mgmt *mgmt = (struct ieee80211_mgmt *)frame;
+ 	struct ieee80211_channel *channel;
+ 	struct cfg80211_bss *bss;
+-	struct timespec ts;
++	struct timespec64 ts;
+ 	u16 capability, beacon_interval;
+ 	u32 freq;
+ 	s32 signal;
+@@ -2258,7 +2258,7 @@ void sprdwl_report_connection(struct sprdwl_vif *vif,
+ 	struct ieee80211_channel *channel;
+ 	struct ieee80211_mgmt *mgmt;
+ 	struct cfg80211_bss *bss = NULL;
+-	struct timespec ts;
++	struct timespec64 ts;
+ #ifdef WMMAC_WFA_CERTIFICATION
+ 	struct wmm_params_element *wmm_params;
+ 	int i;
+diff --git a/drivers/net/wireless/uwe5622/unisocwifi/msg.c b/drivers/net/wireless/uwe5622/unisocwifi/msg.c
+index 511baf91f5de..db51319afddd 100644
+--- a/drivers/net/wireless/uwe5622/unisocwifi/msg.c
++++ b/drivers/net/wireless/uwe5622/unisocwifi/msg.c
+@@ -63,7 +63,7 @@ void sprdwl_msg_deinit(struct sprdwl_msg_list *list)
+ {
+ 	struct sprdwl_msg_buf *msg_buf;
+ 	struct sprdwl_msg_buf *pos;
+-	struct timespec txmsgftime1, txmsgftime2;
++	struct timespec64 txmsgftime1, txmsgftime2;
+ 
+ 	atomic_add(SPRDWL_MSG_EXIT_VAL, &list->ref);
+ 	if (atomic_read(&list->ref) > SPRDWL_MSG_EXIT_VAL)
+diff --git a/drivers/net/wireless/uwe5622/unisocwifi/tx_msg.c b/drivers/net/wireless/uwe5622/unisocwifi/tx_msg.c
+index 7be652187be2..9fd805d731e0 100644
+--- a/drivers/net/wireless/uwe5622/unisocwifi/tx_msg.c
++++ b/drivers/net/wireless/uwe5622/unisocwifi/tx_msg.c
+@@ -45,7 +45,7 @@ struct sprdwl_msg_buf *sprdwl_get_msg_buf(void *pdev,
+ 	struct sprdwl_tx_msg *sprdwl_tx_dev = NULL;
+ 	struct sprdwl_msg_buf *msg_buf;
+ #if defined(MORE_DEBUG)
+-	struct timespec tx_begin;
++	struct timespec64 tx_begin;
+ #endif
+ 
+ 	dev = (struct sprdwl_intf *)pdev;
+@@ -1194,7 +1194,7 @@ void prepare_addba(struct sprdwl_intf *intf, unsigned char lut_index,
+ 		peer_entry->ht_enable &&
+ 		peer_entry->vowifi_enabled != 1 &&
+ 		!test_bit(tid, &peer_entry->ba_tx_done_map)) {
+-		struct timespec time;
++		struct timespec64 time;
+ 
+ 		getnstimeofday(&time);
+ 		/*need to delay 3s if priv addba failed*/
+diff --git a/drivers/net/wireless/uwe5622/unisocwifi/wl_intf.c b/drivers/net/wireless/uwe5622/unisocwifi/wl_intf.c
+index b05a57678264..3283d77fa323 100644
+--- a/drivers/net/wireless/uwe5622/unisocwifi/wl_intf.c
++++ b/drivers/net/wireless/uwe5622/unisocwifi/wl_intf.c
+@@ -132,7 +132,7 @@ void sprdwl_clear_stats(struct sprdwl_intf *intf)
+ void sprdwl_get_tx_avg_time(struct sprdwl_intf *intf,
+ 			    unsigned long tx_start_time)
+ {
+-	struct timespec tx_end;
++	struct timespec64 tx_end;
+ 
+ 	getnstimeofday(&tx_end);
+ 	intf->stats.tx_cost_time +=
+@@ -1333,7 +1333,7 @@ int sprdwl_suspend_resume_handle(int chn, int mode)
+ 	struct sprdwl_tx_msg *tx_msg = (struct sprdwl_tx_msg *)intf->sprdwl_tx;
+ 	int ret;
+ 	struct sprdwl_vif *vif;
+-	struct timespec time;
++	struct timespec64 time;
+ 	enum sprdwl_mode sprdwl_mode = SPRDWL_MODE_STATION;
+ 	u8 mode_found = 0;
+ 
+-- 
+2.38.3
+

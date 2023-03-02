@@ -1,0 +1,40 @@
+From fe86fc12a52a33f575ecce067fdb824cac3a1460 Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Sun, 13 Feb 2022 13:48:14 +0500
+Subject: [PATCH 034/114] dts: Added mmc ddr 1.8V
+
+---
+ arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi b/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
+index ed32c21d4982..9f09fc75dd34 100644
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
+@@ -418,6 +418,7 @@ mmc0: mmc@4020000 {
+ 			cap-sd-highspeed;
+ 			cap-mmc-highspeed;
+ 			mmc-ddr-3_3v;
++			mmc-ddr-1_8v;
+ 			cap-sdio-irq;
+ 			#address-cells = <1>;
+ 			#size-cells = <0>;
+@@ -439,6 +440,7 @@ mmc1: mmc@4021000 {
+ 			cap-sd-highspeed;
+ 			cap-mmc-highspeed;
+ 			mmc-ddr-3_3v;
++			mmc-ddr-1_8v;
+ 			cap-sdio-irq;
+ 			#address-cells = <1>;
+ 			#size-cells = <0>;
+@@ -460,6 +462,7 @@ mmc2: mmc@4022000 {
+ 			cap-sd-highspeed;
+ 			cap-mmc-highspeed;
+ 			mmc-ddr-3_3v;
++			mmc-ddr-1_8v;
+ 			cap-sdio-irq;
+ 			#address-cells = <1>;
+ 			#size-cells = <0>;
+-- 
+2.38.3
+

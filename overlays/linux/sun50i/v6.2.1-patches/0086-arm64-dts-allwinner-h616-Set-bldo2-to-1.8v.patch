@@ -1,0 +1,30 @@
+From 7234504f7c62f4da5578c9965b868722f4349998 Mon Sep 17 00:00:00 2001
+From: orangepi-xunlong <258384131@qq.com>
+Date: Tue, 12 Jul 2022 14:50:25 +0800
+Subject: [PATCH 086/114] arm64: dts: allwinner: h616: Set bldo2 to 1.8v
+
+---
+ .../boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts      | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts b/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts
+index cb5ffbea9f44..99e0cb9cffb1 100644
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts
+@@ -242,8 +242,11 @@ reg_bldo1: bldo1 {
+ 				regulator-name = "vcc1v8";
+ 			};
+ 
+-			bldo2 {
+-				/* unused */
++			reg_bldo2: bldo2 {
++				regulator-always-on;
++				regulator-min-microvolt = <1800000>;
++				regulator-max-microvolt = <1800000>;
++				regulator-name = "vcc1v8";
+ 			};
+ 
+ 			bldo3 {
+-- 
+2.38.3
+

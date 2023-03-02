@@ -1,17 +1,17 @@
 { lib, stdenvNoCC, fetchurl }:
 let fetch = file: hash: fetchurl {
   url = "https://github.com/orangepi-xunlong/firmware/raw/master/${file}";
-  sha256 = hash;
+  inherit hash;
 };
 in stdenvNoCC.mkDerivation rec {
   pname = "uwe5622-firmware";
   version = "1.0";
 
   src = [
-    (fetch "wcnmodem.bin" "1bfcv56b7k04rf34dg9z25rsi8b4rilwqm525mbg7iq1ssnygn2d")
-    (fetch "wifi_2355b001_1ant.ini" "1xrqx72fymhrrixzpkl0mc451pfnjxjp08qwmnchp3as4kn40g0z")
-    (fetch "bt_configure_pskey.ini" "1b6hg946myr5qc5rb5fndigy8yn63nhj8jqx0c0n54b8zmiiyyjs")
-    (fetch "bt_configure_rf.ini" "0zb17l0qv5l2wwiikfi1667lmxq79lpw9m319f40xypxmqmjai20")
+    (fetch "wcnmodem.bin" "sha256-EZuHzjCHVzSmdGL3KT+4/oWs8ycP6LeMl4riS+dxWoA=")
+    (fetch "wifi_2355b001_1ant.ini" "sha256-HzxA7CRajQuZrRwjcGWX1t1QCKuAzvt7zBlW78TpOPc=")
+    (fetch "bt_configure_pskey.ini" "sha256-WnofY/1okWIBAx1LJKEdxnrkX2zWlZULwyX7akh60Kw=")
+    (fetch "bt_configure_rf.ini" "sha256-QEQlK679+g6IS2HUxC9NB/dKjzEhuhkj54KWjQE9YX0=")
   ];
 
   unpackPhase = "true";

@@ -1,0 +1,34 @@
+From d3aca46507baaa6669eba5d0f30057c30fddace3 Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Sat, 2 Apr 2022 19:28:25 +0500
+Subject: [PATCH 047/114] uwe5622: Fixed netdev mac addr setting
+
+---
+ drivers/net/wireless/uwe5622/unisocwifi/main.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/uwe5622/unisocwifi/main.c b/drivers/net/wireless/uwe5622/unisocwifi/main.c
+index 673e432b0fcb..7ea07cd8d2db 100644
+--- a/drivers/net/wireless/uwe5622/unisocwifi/main.c
++++ b/drivers/net/wireless/uwe5622/unisocwifi/main.c
+@@ -1355,6 +1355,7 @@ static struct sprdwl_vif *sprdwl_register_netdev(struct sprdwl_priv *priv,
+ 	struct net_device *ndev;
+ 	struct wireless_dev *wdev;
+ 	struct sprdwl_vif *vif;
++	uint8_t dev_addr[6];
+ 	int ret;
+ 
+ #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0))
+@@ -1411,7 +1412,8 @@ static struct sprdwl_vif *sprdwl_register_netdev(struct sprdwl_priv *priv,
+ 	ndev->features |= NETIF_F_SG;
+ 	SET_NETDEV_DEV(ndev, wiphy_dev(priv->wiphy));
+ 
+-	sprdwl_set_mac_addr(vif, addr, ndev->dev_addr);
++	sprdwl_set_mac_addr(vif, addr, dev_addr);
++	eth_hw_addr_set(ndev, dev_addr);
+ 
+ #ifdef CONFIG_P2P_INTF
+ 	if (type == NL80211_IFTYPE_P2P_DEVICE)
+-- 
+2.38.3
+

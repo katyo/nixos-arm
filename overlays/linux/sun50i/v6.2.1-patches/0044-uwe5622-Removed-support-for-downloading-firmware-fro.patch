@@ -1,0 +1,188 @@
+From b414e962d4e0c21dc3fa36ee1038d5035b98b607 Mon Sep 17 00:00:00 2001
+From: K <kayo@illumium.org>
+Date: Mon, 28 Mar 2022 13:10:49 +0500
+Subject: [PATCH 044/114] uwe5622: Removed support for downloading firmware
+ from hex
+
+---
+ .../net/wireless/uwe5622/unisocwcn/Makefile   | 19 ---------------
+ .../uwe5622/unisocwcn/platform/wcn_boot.c     | 23 -------------------
+ 2 files changed, 42 deletions(-)
+
+diff --git a/drivers/net/wireless/uwe5622/unisocwcn/Makefile b/drivers/net/wireless/uwe5622/unisocwcn/Makefile
+index 8f8f24ba46da..ba766c5cb3c4 100644
+--- a/drivers/net/wireless/uwe5622/unisocwcn/Makefile
++++ b/drivers/net/wireless/uwe5622/unisocwcn/Makefile
+@@ -6,9 +6,6 @@ EXTRA_CFLAGS=-fno-pic
+ 
+ all_dependencies := driver
+ driver_dependencies :=
+-BIN2HEX_TOOL := $(PWD)/fw/bin2hex
+-firmware_file := $(PWD)/fw/wcnmodem.bin
+-firmware_target := $(PWD)/fw/wcnmodem.bin.hex
+ 
+ #### Global configs for each item ######
+ ifeq ($(CFG_HI_WIFI_DEVICE_UWE5621),y)
+@@ -132,7 +129,6 @@ ccflags-y += -DCONFIG_HISI_BOARD
+ #ccflags-y += -DCONFIG_WCN_CHIPEN
+ #ccflags-y += -DCONFIG_WCN_RESET
+ #ccflags-y += -DCONFIG_WCN_POWER_UP_DOWN
+-#ccflags-y += -DCONFIG_WCN_DOWNLOAD_FIRMWARE_FROM_HEX
+ ccflags-y += -DCONFIG_BT_WAKE_HOST_EN
+ #ccflags-y += -DCONFIG_WL_WAKE_HOST_EN
+ ccflags-y += -DCONFIG_WCN_RESUME_POWER_DOWN
+@@ -162,7 +158,6 @@ ccflags-y += -DCONFIG_HISI_BOARD
+ #ccflags-y += -DCONFIG_WCN_CHIPEN
+ #ccflags-y += -DCONFIG_WCN_RESET
+ #ccflags-y += -DCONFIG_WCN_POWER_UP_DOWN
+-#ccflags-y += -DCONFIG_WCN_DOWNLOAD_FIRMWARE_FROM_HEX
+ ccflags-y += -DCONFIG_BT_WAKE_HOST_EN
+ #ccflags-y += -DCONFIG_WL_WAKE_HOST_EN
+ ccflags-y += -DCONFIG_WCN_RESUME_POWER_DOWN
+@@ -191,7 +186,6 @@ ccflags-y += -DCONFIG_HISI_BOARD
+ #ccflags-y += -DCONFIG_WCN_RESET
+ #ccflags-y += -DCONFIG_WCN_POWER_UP_DOWN
+ #ccflags-y += -DCONFIG_WCN_INT_AP
+-#ccflags-y += -DCONFIG_WCN_DOWNLOAD_FIRMWARE_FROM_HEX
+ #ccflags-y += -DCONFIG_BT_WAKE_HOST_EN
+ #ccflags-y += -DCONFIG_WL_WAKE_HOST_EN
+ #ccflags-y += -DCONFIG_WCN_RESUME_POWER_DOWN
+@@ -216,7 +210,6 @@ ccflags-y += -DCONFIG_AML_BOARD
+ #ccflags-y += -DCONFIG_WCN_RESET
+ ccflags-y += -DCONFIG_WCN_RESET_PIN_CONNECTED
+ ccflags-y += -DCONFIG_WCN_POWER_UP_DOWN
+-ccflags-y += -DCONFIG_WCN_DOWNLOAD_FIRMWARE_FROM_HEX
+ ccflags-y += -DCONFIG_BT_WAKE_HOST_EN
+ #ccflags-y += -DCONFIG_WL_WAKE_HOST_EN
+ #ccflags-y += -DCONFIG_WCN_RESUME_POWER_DOWN
+@@ -231,8 +224,6 @@ ccflags-y += -DCONFIG_SDIO_INBAND_INT
+ #ccflags-y += -DCONFIG_SDIO_INBAND_POLLING
+ ccflags-y += -DCONFIG_SDIO_BLKSIZE_512
+ #ccflags-y += -DCONFIG_SDIO_PWRSEQ
+-
+-driver_dependencies += $(firmware_target)
+ endif
+ 
+ ifeq ($(CFG_AML_WIFI_DEVICE_UWE5622),y)
+@@ -243,7 +234,6 @@ ccflags-y += -DCONFIG_AML_BOARD
+ #ccflags-y += -DCONFIG_WCN_RESET
+ #ccflags-y += -DCONFIG_WCN_RESET_PIN_CONNECTED
+ ccflags-y += -DCONFIG_WCN_POWER_UP_DOWN
+-#ccflags-y += -DCONFIG_WCN_DOWNLOAD_FIRMWARE_FROM_HEX
+ #ccflags-y += -DCONFIG_BT_WAKE_HOST_EN
+ #ccflags-y += -DCONFIG_WL_WAKE_HOST_EN
+ #ccflags-y += -DCONFIG_WCN_RESUME_POWER_DOWN
+@@ -260,8 +250,6 @@ endif
+ #ccflags-y += -DCONFIG_SDIO_INBAND_POLLING
+ ccflags-y += -DCONFIG_SDIO_BLKSIZE_512
+ #ccflags-y += -DCONFIG_SDIO_PWRSEQ
+-
+-driver_dependencies += $(firmware_target)
+ endif
+ ### ---------- Amlogic end ---------- ###
+ 
+@@ -270,7 +258,6 @@ ifeq ($(CONFIG_RK_WIFI_DEVICE_UWE5621),y)
+ #### add cflag ######
+ ccflags-y += -DCONFIG_RK_BOARD
+ ccflags-y += -DCONFIG_WCN_PARSE_DTS
+-#ccflags-y += -DCONFIG_WCN_DOWNLOAD_FIRMWARE_FROM_HEX
+ #ccflags-y += -DCONFIG_WCN_RESUME_POWER_DOWN
+ #ccflags-y += -DCONFIG_WCN_RESUME_KEEPPWR_RESETSDIO
+ #ccflags-y += -DCONFIG_WCN_CHECK_MODULE_VENDOR
+@@ -287,7 +274,6 @@ ifeq ($(CONFIG_RK_WIFI_DEVICE_UWE5622),y)
+ #### add cflag ######
+ ccflags-y += -DCONFIG_RK_BOARD
+ ccflags-y += -DCONFIG_WCN_PARSE_DTS
+-#ccflags-y += -DCONFIG_WCN_DOWNLOAD_FIRMWARE_FROM_HEX
+ #ccflags-y += -DCONFIG_WCN_RESUME_POWER_DOWN
+ #ccflags-y += -DCONFIG_WCN_RESUME_KEEPPWR_RESETSDIO
+ #ccflags-y += -DCONFIG_WCN_CHECK_MODULE_VENDOR
+@@ -310,7 +296,6 @@ ccflags-y += -DCONFIG_AW_BOARD
+ #ccflags-y += -DCONFIG_WCN_RESET
+ #ccflags-y += -DCONFIG_WCN_RESET_PIN_CONNECTED
+ ccflags-y += -DCONFIG_WCN_POWER_UP_DOWN
+-#ccflags-y += -DCONFIG_WCN_DOWNLOAD_FIRMWARE_FROM_HEX
+ ccflags-y += -DCONFIG_BT_WAKE_HOST_EN
+ ccflags-y += -DCONFIG_WL_WAKE_HOST_EN
+ #ccflags-y += -DCONFIG_WCN_RESUME_POWER_DOWN
+@@ -390,10 +375,6 @@ EXTRA_CFLAGS += -I $(srctree)/$(src)/include -D__linux__
+ 
+ all: $(all_dependencies)
+ 
+-$(firmware_target): $(firmware_file)
+-	@echo Convert $(firmware_file) to $(firmware_target)
+-	@$(BIN2HEX_TOOL) $(firmware_file)
+-
+ driver: $(driver_dependencies)
+ 	@echo Convert $(firmware_file) to $(firmware_target)
+ 	@$(BIN2HEX_TOOL) $(firmware_file)
+diff --git a/drivers/net/wireless/uwe5622/unisocwcn/platform/wcn_boot.c b/drivers/net/wireless/uwe5622/unisocwcn/platform/wcn_boot.c
+index 2d9c903016dd..6af9c4fae0a9 100644
+--- a/drivers/net/wireless/uwe5622/unisocwcn/platform/wcn_boot.c
++++ b/drivers/net/wireless/uwe5622/unisocwcn/platform/wcn_boot.c
+@@ -51,10 +51,6 @@
+ #include "wcn_glb_reg.h"
+ #include "wcn_glb.h"
+ 
+-#ifdef CONFIG_WCN_DOWNLOAD_FIRMWARE_FROM_HEX
+-#include "../fw/firmware_hex.h"
+-#endif
+-
+ #ifdef CONFIG_AML_BOARD
+ #include <linux/amlogic/aml_gpio_consumer.h>
+ 
+@@ -325,11 +321,7 @@ static struct regmap *reg_map;
+ #define AFC_CALI_READ_FINISH 0x12121212
+ #define WCN_AFC_CALI_PATH "/productinfo/wcn/tsx_bt_data.txt"
+ 
+-#ifdef CONFIG_WCN_DOWNLOAD_FIRMWARE_FROM_HEX
+-#define POWER_WQ_DELAYED_MS 0
+-#else
+ #define POWER_WQ_DELAYED_MS 7500
+-#endif
+ 
+ /* #define E2S(x) { case x: return #x; } */
+ 
+@@ -983,12 +975,10 @@ struct marlin_firmware {
+ static int marlin_request_firmware(struct marlin_firmware **mfirmware_p)
+ {
+ 	struct marlin_firmware *mfirmware;
+-#ifndef CONFIG_WCN_DOWNLOAD_FIRMWARE_FROM_HEX
+ 	unsigned char load_fw_cnt = 0;
+ 	const void *buffer;
+ 	const struct firmware *firmware;
+ 	int ret = 0;
+-#endif
+ 
+ 	*mfirmware_p = NULL;
+ 	mfirmware = kmalloc(sizeof(struct marlin_firmware), GFP_KERNEL);
+@@ -1002,17 +992,6 @@ static int marlin_request_firmware(struct marlin_firmware **mfirmware_p)
+ 	marlin_dev->is_btwf_in_sysfs = 1;
+ #endif
+ 
+-#ifdef CONFIG_WCN_DOWNLOAD_FIRMWARE_FROM_HEX
+-
+-	/* Some customer (amlogic) download fw from /fw/wcnmodem.bin.hex */
+-	WCN_INFO("marlin %s from wcnmodem.bin.hex start!\n", __func__);
+-	mfirmware->data = firmware_hex_buf;
+-	mfirmware->size = FIRMWARE_HEX_SIZE;
+-	mfirmware->is_from_fs = 0;
+-	mfirmware->priv = firmware_hex_buf;
+-
+-#else /* CONFIG_WCN_DOWNLOAD_FIRMWARE_FROM_HEX */
+-
+ 	if (marlin_dev->is_btwf_in_sysfs != 1) {
+ 		/*
+ 		 * If first power on, download from partition,
+@@ -1080,8 +1059,6 @@ static int marlin_request_firmware(struct marlin_firmware **mfirmware_p)
+ 		mfirmware->priv = buffer;
+ 	}
+ 
+-#endif /* CONFIG_WCN_DOWNLOAD_FIRMWARE_FROM_HEX */
+-
+ 	memcpy(functionmask, mfirmware->data, 8);
+ 	if ((functionmask[0] == 0x00) && (functionmask[1] == 0x00)) {
+ 		mfirmware->data += 8;
+-- 
+2.38.3
+

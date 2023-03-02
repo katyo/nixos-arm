@@ -1,0 +1,29 @@
+From a44c8931c2385dc0740631928d1726fb616c0dd3 Mon Sep 17 00:00:00 2001
+From: Ondrej Jirman <megous@megous.com>
+Date: Mon, 8 Apr 2019 03:49:26 +0200
+Subject: [PATCH 1/2] Fix reset issue on H6 by using R_WDOG
+
+Inspired by froezuses patch here:
+
+https://forum.armbian.com/topic/9833-h6-famous-reboot-problem/?page=3
+
+Signed-off-by: Ondrej Jirman <megous@megous.com>
+---
+ plat/allwinner/sun50i_h6/include/sunxi_mmap.h | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/plat/allwinner/sun50i_h6/include/sunxi_mmap.h b/plat/allwinner/sun50i_h6/include/sunxi_mmap.h
+index 58216d848..6ab68deb6 100644
+--- a/plat/allwinner/sun50i_h6/include/sunxi_mmap.h
++++ b/plat/allwinner/sun50i_h6/include/sunxi_mmap.h
+@@ -60,4 +60,7 @@
+ #define SUNXI_R_UART_BASE		0x07080000
+ #define SUNXI_R_PIO_BASE		0x07022000
+ 
++#undef SUNXI_WDOG_BASE
++#define SUNXI_WDOG_BASE			SUNXI_R_WDOG_BASE
++
+ #endif /* SUNXI_MMAP_H */
+-- 
+2.36.0
+

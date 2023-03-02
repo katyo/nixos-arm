@@ -1,0 +1,102 @@
+From f58f9b049998726286c4765e60c243368f7e8f4a Mon Sep 17 00:00:00 2001
+From: orangepi-xunlong <258384131@qq.com>
+Date: Fri, 15 Apr 2022 16:55:49 +0800
+Subject: [PATCH 081/114] arm64: dts: allwinner: h616: Add pwm conf
+
+---
+ .../arm64/boot/dts/allwinner/sun50i-h616.dtsi | 72 +++++++++++++++++++
+ 1 file changed, 72 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi b/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
+index 82736fc9b877..f48de4ee728c 100644
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
+@@ -268,6 +268,53 @@ watchdog: watchdog@30090a0 {
+ 			clocks = <&osc24M>;
+ 		};
+ 
++		pwm: pwm@300a000 {
++			compatible = "allwinner,sun50i-h616-pwm";
++			reg = <0x0300a000 0x400>;
++			clocks = <&osc24M>, <&ccu CLK_BUS_PWM>;
++			clock-names = "mod", "bus";
++			resets = <&ccu RST_BUS_PWM>;
++			pwm-number = <6>;
++			pwm-base = <0x0>;
++			sunxi-pwms = <&pwm0>, <&pwm1>, <&pwm2>, <&pwm3>, <&pwm4>, <&pwm5>;
++			#pwm-cells = <3>;
++			status = "disabled";
++		};
++
++		pwm0: pwm0@0300a000 {
++			compatible = "allwinner,sunxi-pwm0";
++		};
++
++		pwm1: pwm1@0300a000 {
++			compatible = "allwinner,sunxi-pwm1";
++			pinctrl-names = "default";
++			pinctrl-0 = <&pwm1_pin>;
++		};
++
++		pwm2: pwm2@0300a000 {
++			compatible = "allwinner,sunxi-pwm2";
++			pinctrl-names = "default";
++			pinctrl-0 = <&pwm2_pin>;
++		};
++
++		pwm3: pwm3@0300a000 {
++			compatible = "allwinner,sunxi-pwm3";
++			pinctrl-names = "default";
++			pinctrl-0 = <&pwm3_pin>;
++		};
++
++		pwm4: pwm4@0300a000 {
++			compatible = "allwinner,sunxi-pwm4";
++			pinctrl-names = "default";
++			pinctrl-0 = <&pwm4_pin>;
++		};
++
++		pwm5: pwm5@0300a000 {
++			compatible = "allwinner,sunxi-pwm5";
++			pinctrl-names = "default";
++			pinctrl-0 = <&pwm5_pin>;
++		};
++
+ 		pio: pinctrl@300b000 {
+ 			compatible = "allwinner,sun50i-h616-pinctrl";
+ 			reg = <0x0300b000 0x400>;
+@@ -316,6 +363,31 @@ ir_rx_pin: ir-rx-pin {
+ 				function = "ir_rx";
+ 			};
+ 
++			pwm1_pin: pwm1-pin {
++				pins = "PH3";
++				function = "pwm1";
++			};
++
++			pwm2_pin: pwm2-pin {
++				pins = "PH2";
++				function = "pwm2";
++			};
++
++			pwm3_pin: pwm3-pin {
++				pins = "PH0";
++				function = "pwm3";
++			};
++
++			pwm4_pin: pwm4-pin {
++				pins = "PH1";
++				function = "pwm4";
++			};
++
++			pwm5_pin: pwm5-pin {
++				pins = "PA12";
++				function = "pwm4";
++			};
++
+ 			mmc0_pins: mmc0-pins {
+ 				pins = "PF0", "PF1", "PF2", "PF3",
+ 				       "PF4", "PF5";
+-- 
+2.38.3
+

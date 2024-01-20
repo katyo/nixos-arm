@@ -17,4 +17,5 @@
       # "ssh-ed25519 AAAAC3NzaC1lZDI1.... username@tld"
     ];
   };
+  boot.supportedFilesystems = lib.mkForce [ "btrfs" "cifs" "f2fs" "jfs" "ntfs" "reiserfs" "vfat" "xfs" ];
 }
